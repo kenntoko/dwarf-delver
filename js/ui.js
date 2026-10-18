@@ -95,6 +95,10 @@ DD.ui = {
   offerLevelChoices() {
     const S = DD.state;
     const choices = DD.utils.shuffle(Object.keys(DD.data.upgradeDefs).filter(k => S.player.upgrades[k] < DD.data.upgradeDefs[k].max)).slice(0, 3);
+    if (!choices.length) {
+      this.closeLevelChoices();
+      return;
+    }
     S.pendingChoices = choices;
     S.paused = true;
     S.pauseReason = 'levelup';
@@ -111,6 +115,14 @@ DD.ui = {
     S.paused = false;
     S.pauseReason = '';
     S.pendingChoices = null;
+    S.lastTimeStamp = 0;
+    for (const enemy of S.enemies) {
+      if (enemy.type !== 'slime') continue;
+      enemy.path = [];
+      enemy.repath = 0;
+      enemy.pathTileX = null;
+      enemy.pathTileY = null;
+    }
     this.maybeShowExitPrompt();
   },
   enterItemMode(itemKey) {

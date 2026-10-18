@@ -316,9 +316,12 @@ DD.systems = {
     }
     let target = direct ? goal : null;
     if (!direct) {
-      if (enemy.repath <= 0 || !enemy.path || !enemy.path.length) {
+      if (enemy.repath <= 0 || !enemy.path || !enemy.path.length ||
+          enemy.pathTileX !== enemy.tileX || enemy.pathTileY !== enemy.tileY) {
         enemy.path = this.computePath({ x: enemy.tileX, y: enemy.tileY }, S.board.entry);
         enemy.repath = 0.6;
+        enemy.pathTileX = enemy.tileX;
+        enemy.pathTileY = enemy.tileY;
       }
       // Grid routing finds the corridor; visibility smoothing skips its cell centers.
       // Steering toward the farthest visible point gives any-angle movement.
@@ -333,7 +336,11 @@ DD.systems = {
     }
     const dx = target.x - enemy.x, dy = target.y - enemy.y;
     const distance = Math.hypot(dx, dy);
-    if (distance < 0.01) return;
+    if (distance < 0.01) {
+      enemy.repath = 0;
+      enemy.path = [];
+      return;
+    }
     const travel = Math.min(distance, DD.config.baseEnemySpeed * def.speedMul * dt);
     // Small swept steps keep large frame deltas from tunneling through rock.
     const steps = Math.max(1, Math.ceil(travel / 2));
