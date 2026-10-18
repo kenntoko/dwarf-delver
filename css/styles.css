@@ -159,9 +159,11 @@ canvas {
 @keyframes exit-pulse { 0%, 100% { opacity: 1; box-shadow: 0 0 8px rgba(255,204,102,.4); } 50% { opacity: .5; box-shadow: none; } }
 @media (prefers-reduced-motion: reduce) { #descendBtn.exit-ready { animation: none; } }
 
-.top-vitals { display:grid; grid-template-columns:1fr 1fr; gap:18px; padding:10px 14px; position:sticky; top:0; z-index:35; }
+.top-vitals { display:grid; grid-template-columns:1fr; gap:8px; padding:10px 14px; position:sticky; top:0; z-index:35; }
 .pixel-meter { min-width:0; }
-.meter-label { display:flex; justify-content:space-between; font: bold 12px monospace; margin-bottom:5px; }
+.meter-number { position:absolute; left:10px; top:50%; transform:translateY(-50%); z-index:2; display:flex; gap:2px; height:14px; align-items:center; pointer-events:none; filter:drop-shadow(1px 1px 0 #120b08) drop-shadow(-1px -1px 0 #120b08); }
+.meter-number svg { width:6px; height:10px; flex:none; fill:#fff8df; shape-rendering:crispEdges; }
+.meter-number .digit-space { width:3px; height:10px; }
 .meter-track { position:relative; height:24px; overflow:hidden; background:#120e0c; border:2px solid #745a3e; border-radius:0; box-shadow:2px 2px 0 #080706,inset 0 0 0 2px #30271e; }
 .meter-art { position:absolute; inset:0; width:100%; height:100%; image-rendering:pixelated; background-size:100% 100%; background-repeat:no-repeat; }
 .meter-art.hpFill { background-image:url('./../assets/hp-bar-pixel.png'); background-color:#cf3e3e; }

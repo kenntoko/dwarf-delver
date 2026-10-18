@@ -4,15 +4,11 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Dwarf Delver Pre-release</title>
-  <link rel="stylesheet" href="./css/styles.css?v=combat-clarity-1" />
+  <link rel="stylesheet" href="./css/styles.css?v=stacked-vitals-1" />
 </head>
 <body>
   <div id="app">
     <div id="leftCol">
-      <div class="panel top-vitals" aria-label="主人公のHPと経験値">
-        <div class="pixel-meter" id="hpMeter"><div class="meter-label"><strong>HP</strong><span id="hpText">100 / 100</span></div><div class="meter-track hp-track"><div id="hpBar" class="meter-art hpFill"></div></div></div>
-        <div class="pixel-meter"><div class="meter-label"><strong>EXP</strong><span id="xpText">0 / 100</span></div><div class="meter-track xp-track"><div id="xpBar" class="meter-art xpFill"></div></div></div>
-      </div>
       <div class="panel">
         <div class="topline">
           <div>
@@ -22,6 +18,10 @@
           <div id="phasePill" class="pill">B1F</div>
         </div>
         <div id="statusText" class="hint">入口から洞窟を掘り進めて出口を探そう～</div>
+      </div>
+      <div class="panel top-vitals" aria-label="主人公のHPと経験値">
+        <div class="pixel-meter" id="hpMeter"><div class="meter-track hp-track"><div id="hpBar" class="meter-art hpFill"></div><span id="hpText" class="meter-number" aria-label="HP 100 / 100">100 / 100</span></div></div>
+        <div class="pixel-meter"><div class="meter-track xp-track"><div id="xpBar" class="meter-art xpFill"></div><span id="xpText" class="meter-number" aria-label="EXP 0 / 100">0 / 100</span></div></div>
       </div>
       <div id="boardWrap">
         <canvas id="gameCanvas" width="1200" height="800"></canvas>
@@ -74,7 +74,7 @@
   <script src="./js/state.js"></script>
   <script src="./js/board.js?v=exit-choice-1"></script>
   <script src="./js/systems.js?v=combat-clarity-1"></script>
-  <script src="./js/ui.js?v=combat-clarity-1"></script>
+  <script src="./js/ui.js?v=stacked-vitals-1"></script>
   <script src="./js/render.js?v=combat-clarity-1"></script>
   <script src="./js/main.js?v=chord-1"></script>
 </body>

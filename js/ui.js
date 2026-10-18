@@ -42,6 +42,28 @@ DD.ui = {
       if (e.key === 'Escape' && DD.state.pauseReason === 'item') this.clearItemMode();
     });
   },
+  renderMeterValue(element, value, label) {
+    if (element.dataset.value === value) return;
+    element.dataset.value = value;
+    element.setAttribute('aria-label', label + ' ' + value);
+    const glyphs = {
+      '0':['111','101','101','101','111'],'1':['010','110','010','010','111'],
+      '2':['111','001','111','100','111'],'3':['111','001','111','001','111'],
+      '4':['101','101','111','001','001'],'5':['111','100','111','001','111'],
+      '6':['111','100','111','101','111'],'7':['111','001','010','010','010'],
+      '8':['111','101','111','101','111'],'9':['111','101','111','001','111'],
+      '/':['001','001','010','100','100'],'.':['000','000','000','000','010']
+    };
+    element.innerHTML = [...value].map(ch => {
+      const glyph = glyphs[ch];
+      if (!glyph) return '<span class="digit-space" aria-hidden="true"></span>';
+      let pixels = '';
+      glyph.forEach((row,y) => [...row].forEach((v,x) => {
+        if (v === '1') pixels += `<rect x="${x}" y="${y}" width="1" height="1"/>`;
+      }));
+      return `<svg viewBox="0 0 3 5" aria-hidden="true" focusable="false">${pixels}</svg>`;
+    }).join('');
+  },
   shakeHpBar() {
     const meter = DD.state.dom && DD.state.dom.hpMeter;
     if (!meter) return;
@@ -55,9 +77,9 @@ DD.ui = {
   refreshHud() {
     const S = DD.state, D = S.dom;
     D.hpBar.style.clipPath = `inset(0 ${100 - DD.utils.clamp(S.player.hp / S.player.maxHp * 100, 0, 100)}% 0 0)`;
-    D.hpText.textContent = `${Math.ceil(S.player.hp)} / ${S.player.maxHp}`;
+    this.renderMeterValue(D.hpText, `${Math.ceil(S.player.hp)} / ${S.player.maxHp}`, 'HP');
     D.xpBar.style.clipPath = `inset(0 ${100 - DD.utils.clamp(S.player.xp / S.player.nextXp * 100, 0, 100)}% 0 0)`;
-    D.xpText.textContent = `${S.player.xp} / ${S.player.nextXp}`;
+    this.renderMeterValue(D.xpText, `${S.player.xp} / ${S.player.nextXp}`, 'EXP');
     D.levelText.textContent = S.player.level;
     D.defText.textContent = `${S.player.upgrades.defense * 8}%`;
     D.dwarfText.textContent = S.player.upgrades.summon;
