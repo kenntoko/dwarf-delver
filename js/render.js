@@ -32,25 +32,9 @@ DD.render = {
       ctx.globalAlpha = DD.state.mode === 'boss' ? board.bossOverlayAlpha : 1;
       const atlas = DD.assets.get('cave_autotile_32');
       const rock = DD.assets.get('cave_wall_32');
-      const isPassage = (nx, ny) => DD.utils.inBounds(nx,ny) && board.grid[ny][nx].active && board.grid[ny][nx].isOpen;
       if (t.isOpen && atlas && atlas.complete && atlas.naturalWidth === 128) {
-        // Four-way cardinal neighborhood bitmap: N=1, E=2, S=4, W=8.
-        const mask = (isPassage(x,y-1)?1:0) | (isPassage(x+1,y)?2:0) |
-          (isPassage(x,y+1)?4:0) | (isPassage(x-1,y)?8:0);
-        ctx.drawImage(atlas,(mask%4)*32,Math.floor(mask/4)*32,32,32,px,py,TILE,TILE);
-        // A corner is floor when all three cells touching that corner are open.
-        // Keep the original rock corner beside an unopened diagonal cell.
-        const corners = [
-          [-1, -1, 9, 0, 0], [1, -1, 3, 24, 0],
-          [-1, 1, 12, 0, 24], [1, 1, 6, 24, 24]
-        ];
-        for (const [dx, dy, sides, cx, cy] of corners) {
-          if ((mask & sides) === sides && isPassage(x + dx, y + dy)) {
-            // Reuse the atlas's interior floor texture; no replacement artwork.
-            ctx.drawImage(atlas, 104, 104, 8, 8,
-              px + cx * TILE / 32, py + cy * TILE / 32, TILE / 4, TILE / 4);
-          }
-        }
+        // Floor fills the entire open cell. Rock edges belong only to closed cells.
+        ctx.drawImage(atlas, 104, 104, 16, 16, px, py, TILE, TILE);
       } else if (!t.isOpen && rock && rock.complete && rock.naturalWidth === 32) {
         ctx.drawImage(rock,px,py,TILE,TILE);
       } else {
@@ -58,8 +42,10 @@ DD.render = {
         ctx.fillRect(px,py,TILE,TILE);
       }
       if (t.autoHint && !t.isOpen) { ctx.fillStyle='rgba(85,175,255,0.45)'; ctx.fillRect(px,py,TILE,TILE); }
-      ctx.strokeStyle = 'rgba(20,10,5,.22)';
-      ctx.strokeRect(px,py,TILE,TILE);
+      // Keep the full one-pixel grid stroke inside its own cell.
+      ctx.strokeStyle = t.isOpen ? 'rgba(20,10,5,.22)' : 'rgba(20,10,5,.65)';
+      ctx.lineWidth = 1;
+      ctx.strokeRect(px + 0.5, py + 0.5, TILE - 1, TILE - 1);
       ctx.globalAlpha = 1;
 
       if (t.isEntrance && DD.state.mode === 'dungeon') {
