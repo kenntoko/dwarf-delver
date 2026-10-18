@@ -173,3 +173,23 @@ canvas {
 @media(max-width:600px){ .top-vitals{gap:10px;padding:8px}.meter-track{height:20px} }
 
 .level-readout { position:static; transform:none; margin:0 0 0 10px; height:14px; }
+
+/* Inventory pixels match the two-CSS-pixel cells of the Lv glyphs. */
+@font-face{font-family:ItemDot;src:url('../assets/item-ui-dot.ttf') format('truetype');font-display:block}
+#inventoryDock{position:absolute;right:8px;top:6px;left:8px;z-index:10;display:flex;flex-direction:row-reverse;flex-wrap:wrap;gap:4px;pointer-events:none}
+.item-slot{width:40px;height:40px;flex:0 0 40px;padding:2px;border:2px solid #a48957;border-radius:0;background:#231d17;cursor:pointer;pointer-events:auto}
+.item-slot img{width:32px;height:32px;display:block;image-rendering:pixelated}
+.item-slot:disabled{cursor:default;opacity:.65}
+.item-slot:focus-visible{outline:2px solid #fff1bd;outline-offset:2px}
+.item-dialog-layer{position:fixed;inset:0;z-index:100;display:none;align-items:center;justify-content:center;padding:16px;background:rgba(5,5,5,.76)}
+.item-dialog-layer.show{display:flex}
+.pixel-item-ui,.pixel-item-ui button{font-family:ItemDot,monospace;font-size:16px;line-height:1.8;font-weight:400}
+.pixel-item-ui{max-width:480px;border-radius:0;border:4px solid #ab8d5b;box-shadow:6px 6px 0 #090806;text-align:center}
+.pixel-item-ui h2{font-size:20px;font-weight:400}
+.pixel-item-ui button{border-radius:0}
+.loot-icon{width:64px;height:64px;image-rendering:pixelated}
+.item-actions{display:flex;gap:12px}
+#chestFlash{position:fixed;inset:0;z-index:110;pointer-events:none;background:#fff7cf;opacity:0}
+#chestFlash.chest-flash{animation:chest-flash .3s steps(1,end)}
+@keyframes chest-flash{0%{opacity:.85}25%{opacity:.45}55%{opacity:.15}100%{opacity:0}}
+@media(prefers-reduced-motion:reduce){#chestFlash.chest-flash{animation:none}}

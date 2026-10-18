@@ -21,7 +21,7 @@ DD.main = {
       const tile = S.board.grid[gy][gx];
       if (!tile.active) return;
 
-      if (S.pauseReason === 'levelup') return;
+      if (S.paused && S.pauseReason !== 'item') return;
       if (S.pauseReason === 'item' && S.itemMode) {
         if (e.button === 0) DD.systems.applyItemToCell(S.itemMode, gx, gy);
         if (e.button === 2) DD.ui.clearItemMode();

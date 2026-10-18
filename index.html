@@ -4,7 +4,7 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Dwarf Delver Pre-release</title>
-  <link rel="stylesheet" href="./css/styles.css?v=hero-pixel-hurt-1" />
+  <link rel="stylesheet" href="./css/styles.css?v=chest-items-1" />
 </head>
 <body>
   <div id="app">
@@ -25,6 +25,7 @@
         <div id="levelText" class="meter-number level-readout" aria-label="Lv.1">Lv.1</div>
       </div>
       <div id="boardWrap">
+        <div id="inventoryDock" role="group" aria-label="所持アイテム"></div>
         <canvas id="gameCanvas" width="1200" height="800"></canvas>
         <div id="overlay"></div>
         <div id="itemOverlay"></div>
@@ -50,12 +51,6 @@
       </div>
 
       <div class="panel">
-        <h2>宝箱アイテム</h2>
-        <div id="inventoryBox" class="miniGrid"></div>
-        <div class="hint" style="margin-top:8px">消耗品の対象指定中は時間停止～</div>
-      </div>
-
-      <div class="panel">
         <h2>フロア情報</h2>
         <div id="floorInfo"></div>
       </div>
@@ -67,15 +62,18 @@
     </div>
   </div>
 
+  <div id="lootDialog" class="item-dialog-layer"></div>
+  <div id="itemConfirmDialog" class="item-dialog-layer"></div>
+  <div id="chestFlash" aria-hidden="true"></div>
   <script src="./js/config.js"></script>
   <script src="./js/utils.js"></script>
   <script src="./js/data.js"></script>
-  <script src="./js/assets-hero-v1.js?v=hero-pixel-hurt-1"></script>
+  <script src="./js/assets-hero-v1.js?v=chest-items-1"></script>
   <script src="./js/state.js"></script>
-  <script src="./js/board.js?v=hero-pixel-hurt-1"></script>
-  <script src="./js/systems-hero-v2.js?v=hero-pixel-hurt-1"></script>
-  <script src="./js/ui.js?v=hero-pixel-hurt-1"></script>
-  <script src="./js/render-hero-v3.js?v=hero-pixel-hurt-1"></script>
-  <script src="./js/main.js?v=hero-pixel-hurt-1"></script>
+  <script src="./js/board.js?v=chest-items-1"></script>
+  <script src="./js/systems-items-v1.js?v=chest-items-1"></script>
+  <script src="./js/ui-items-v1.js?v=chest-items-1"></script>
+  <script src="./js/render-hero-v3.js?v=chest-items-1"></script>
+  <script src="./js/main-items-v1.js?v=chest-items-1"></script>
 </body>
 </html>

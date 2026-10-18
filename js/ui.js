@@ -4,6 +4,10 @@ DD.ui = {
     const S = DD.state;
     S.dom = {
       canvas: document.getElementById('gameCanvas'),
+      inventoryDock: document.getElementById('inventoryDock'),
+      lootDialog: document.getElementById('lootDialog'),
+      itemConfirmDialog: document.getElementById('itemConfirmDialog'),
+      chestFlash: document.getElementById('chestFlash'),
       overlay: document.getElementById('overlay'),
       itemOverlay: document.getElementById('itemOverlay'),
       messageBanner: document.getElementById('messageBanner'),
@@ -28,7 +32,21 @@ DD.ui = {
     S.canvas = S.dom.canvas;
     S.ctx = S.canvas.getContext('2d');
     S.dom.descendBtn.addEventListener('click', () => DD.systems.nextFloor());
+    S.dom.inventoryDock.addEventListener('click', e => {
+      const button = e.target.closest('button[data-unit]');
+      if (button) this.confirmItem(Number(button.dataset.unit));
+    });
     window.addEventListener('keydown', (e) => {
+      if (['loot', 'item-confirm'].includes(S.pauseReason)) {
+        if (e.key === 'Escape' && S.pauseReason === 'item-confirm') this.cancelItemConfirm();
+        if (e.key === 'Tab') {
+          const box = S.pauseReason === 'loot' ? S.dom.lootDialog : S.dom.itemConfirmDialog;
+          const buttons = [...box.querySelectorAll('button')];
+          const i = buttons.indexOf(document.activeElement); e.preventDefault();
+          buttons[(i + (e.shiftKey ? -1 : 1) + buttons.length) % buttons.length].focus();
+        }
+        return;
+      }
       if (e.key.toLowerCase() === 'n') DD.systems.nextFloor();
       if (DD.state.pauseReason === 'exit') {
         if (e.key === 'Escape') this.continueExploring();
@@ -42,6 +60,102 @@ DD.ui = {
       if (e.key === 'Escape' && DD.state.pauseReason === 'item') this.clearItemMode();
     });
   },
+
+  itemIcon(key) { return './assets/item_' + key + '_16.png'; },
+  renderInventory() {
+    const S = DD.state, dock = S.dom.inventoryDock;
+    S.itemUnits = S.itemUnits || [];
+    const signature = S.itemUnits.map(u => u.id + ':' + u.key).join(',') + ':' + S.paused;
+    if (dock.dataset.signature === signature) return;
+    dock.dataset.signature = signature;
+    dock.innerHTML = S.itemUnits.map(u => '<button type="button" class="item-slot" data-unit="' + u.id +
+      '" aria-label="' + DD.data.itemDefs[u.key].name + 'を使用" title="' + DD.data.itemDefs[u.key].name +
+      '"' + (S.paused || S.mode === 'lost' || S.mode === 'won' ? ' disabled' : '') + '><img src="' +
+      this.itemIcon(u.key) + '" width="32" height="32" alt=""></button>').join('');
+  },
+  flashChest() {
+    const el = DD.state.dom.chestFlash;
+    el.classList.remove('chest-flash'); void el.offsetWidth; el.classList.add('chest-flash');
+  },
+  resumePendingDialogs() {
+    const S = DD.state;
+    if (S.paused || S.mode === 'lost' || S.mode === 'won') return;
+    if (S.pendingLevelBonuses > 0) { this.offerLevelChoices(); return; }
+    if (S.pendingLoot && S.pendingLoot.length) { this.showChestLoot(); return; }
+    this.maybeShowExitPrompt();
+  },
+  showChestLoot() {
+    const S = DD.state;
+    if (S.paused || !S.pendingLoot || !S.pendingLoot.length) return;
+    const loot = S.pendingLoot[0], def = DD.data.itemDefs[loot.key];
+    S.itemReturnFocus = document.activeElement;
+    S.paused = true; S.pauseReason = 'loot';
+    S.dom.lootDialog.innerHTML = '<div class="modal pixel-item-ui" role="dialog" aria-modal="true" aria-labelledby="lootTitle">' +
+      '<h2 id="lootTitle">宝箱から入手しました</h2><img class="loot-icon" src="' + this.itemIcon(loot.key) +
+      '" alt=""><p>' + def.name + ' ×1</p><button class="messageButton" id="lootOk">OK</button></div>';
+    S.dom.lootDialog.classList.add('show');
+    document.getElementById('lootOk').onclick = () => this.acknowledgeLoot();
+    document.getElementById('lootOk').focus();
+    this.refreshHud();
+  },
+  acknowledgeLoot() {
+    const S = DD.state;
+    if (S.pauseReason !== 'loot') return;
+    S.pendingLoot.shift();
+    S.dom.lootDialog.classList.remove('show'); S.dom.lootDialog.innerHTML = '';
+    S.paused = false; S.pauseReason = ''; S.lastTimeStamp = 0;
+    if (S.itemReturnFocus && S.itemReturnFocus.isConnected) S.itemReturnFocus.focus();
+    this.resumePendingDialogs(); this.refreshHud();
+  },
+  itemTerms(key) {
+    if (key === 'heal') return 'HPを30回復（最大HPまで）。HP満タンでも消費されます。';
+    const condition = DD.state.mode === 'boss' ? '未探索マスを選択。' : '開いたマスに隣接する未探索マスを選択。';
+    if (key === 'reinforce') return condition + '危険岩盤を安全化。安全マスでも消費されます。';
+    if (key === 'survey') return condition + '周囲8マスにある危険岩盤の数を表示。';
+    return condition + '周囲8マスの未探索マスの情報を表示。';
+  },
+  confirmItem(id) {
+    const S = DD.state;
+    if (S.paused || S.mode === 'lost' || S.mode === 'won') return;
+    const unit = (S.itemUnits || []).find(u => u.id === id);
+    if (!unit || !(S.inventory[unit.key] > 0)) return;
+    S.selectedItemUnit = id; S.itemReturnFocus = document.activeElement;
+    S.paused = true; S.pauseReason = 'item-confirm';
+    S.dom.itemConfirmDialog.innerHTML = '<div class="modal pixel-item-ui" role="dialog" aria-modal="true" aria-labelledby="itemTitle">' +
+      '<h2 id="itemTitle">' + DD.data.itemDefs[unit.key].name + '</h2><img class="loot-icon" src="' +
+      this.itemIcon(unit.key) + '" alt=""><p>使用条件・効果</p><p>' + this.itemTerms(unit.key) +
+      '</p><div class="item-actions"><button class="messageButton" id="itemUse">使う</button>' +
+      '<button class="messageButton" id="itemCancel">キャンセル</button></div></div>';
+    S.dom.itemConfirmDialog.classList.add('show');
+    document.getElementById('itemUse').onclick = () => this.useConfirmedItem();
+    document.getElementById('itemCancel').onclick = () => this.cancelItemConfirm();
+    document.getElementById('itemCancel').focus(); this.refreshHud();
+  },
+  closeItemConfirm() {
+    const S = DD.state;
+    S.dom.itemConfirmDialog.classList.remove('show'); S.dom.itemConfirmDialog.innerHTML = '';
+    S.paused = false; S.pauseReason = ''; S.lastTimeStamp = 0;
+  },
+  cancelItemConfirm() {
+    if (DD.state.pauseReason !== 'item-confirm') return;
+    this.closeItemConfirm(); DD.state.selectedItemUnit = null;
+    this.refreshHud();
+    if (DD.state.itemReturnFocus && DD.state.itemReturnFocus.isConnected) DD.state.itemReturnFocus.focus();
+    this.resumePendingDialogs();
+  },
+  useConfirmedItem() {
+    const S = DD.state;
+    if (S.pauseReason !== 'item-confirm') return;
+    const unit = (S.itemUnits || []).find(u => u.id === S.selectedItemUnit);
+    if (!unit || !(S.inventory[unit.key] > 0)) { this.cancelItemConfirm(); return; }
+    this.closeItemConfirm();
+    if (unit.key === 'heal') {
+      DD.systems.useInstantItem(unit.key); S.selectedItemUnit = null;
+      this.resumePendingDialogs();
+    } else this.enterItemMode(unit.key);
+    this.refreshHud();
+  },
+
   renderMeterValue(element, value, label) {
     if (element.dataset.value === value) return;
     element.dataset.value = value;
@@ -102,16 +216,7 @@ DD.ui = {
       return `<div class="upgradeItem"><strong>${def.name}</strong><br>Lv ${S.player.upgrades[k]} / ${def.max}</div>`;
     }).join('');
 
-    D.inventoryBox.innerHTML = Object.entries(DD.data.itemDefs).map(([k, def]) => `
-      <div class="invItem"><strong>${def.name}</strong><br><span>× ${S.inventory[k]}</span>
-      <button ${S.inventory[k] <= 0 ? 'disabled' : ''} data-item="${k}">使う</button></div>`).join('');
-    D.inventoryBox.querySelectorAll('button[data-item]').forEach(btn => {
-      btn.onclick = () => {
-        const key = btn.dataset.item;
-        if (key === 'heal') DD.systems.useInstantItem(key);
-        else this.enterItemMode(key);
-      };
-    });
+    this.renderInventory();
 
     let info = '';
     if (S.mode === 'dungeon') {
@@ -131,6 +236,7 @@ DD.ui = {
   },
   offerLevelChoices() {
     const S = DD.state;
+    if (S.paused && S.pauseReason !== 'levelup') return;
     if (!(S.pendingLevelBonuses > 0) || S.mode === 'lost' || S.mode === 'won') return;
     if (S.pauseReason === 'levelup' && S.pendingChoices && S.pendingChoices.length) {
       this.renderMeterValue(document.getElementById('levelBonusCount'), `BONUS:${S.pendingLevelBonuses}`, '残り選択回数');
@@ -172,7 +278,7 @@ DD.ui = {
       enemy.pathTileX = null;
       enemy.pathTileY = null;
     }
-    this.maybeShowExitPrompt();
+    this.resumePendingDialogs();
   },
   enterItemMode(itemKey) {
     const S = DD.state;
@@ -180,20 +286,21 @@ DD.ui = {
     S.itemMode = itemKey;
     S.paused = true;
     S.pauseReason = 'item';
-    S.dom.itemOverlay.innerHTML = `<div class="modal"><h2>${DD.data.itemDefs[itemKey].name}</h2><p>${DD.data.itemDefs[itemKey].desc}</p><p class="hint">対象マスをクリックしてね～。キャンセルは右クリックかEsc。</p><button class="messageButton" id="cancelItemBtn">キャンセル</button></div>`;
+    S.dom.itemOverlay.innerHTML = `<div class="modal pixel-item-ui"><h2>${DD.data.itemDefs[itemKey].name}</h2><p>対象マスをクリック</p><p>右クリックかEscで中止</p><button class="messageButton" id="cancelItemBtn">キャンセル</button></div>`;
     S.dom.itemOverlay.classList.add('show');
     document.getElementById('cancelItemBtn').onclick = () => this.clearItemMode();
   },
   clearItemMode() {
     const S = DD.state;
     S.itemMode = null;
+    S.selectedItemUnit = null;
     if (S.pauseReason === 'item') {
       S.paused = false;
       S.pauseReason = '';
     }
     S.dom.itemOverlay.classList.remove('show');
     S.dom.itemOverlay.innerHTML = '';
-    this.maybeShowExitPrompt();
+    this.resumePendingDialogs();
   },
   maybeShowExitPrompt() {
     const S = DD.state;
@@ -229,6 +336,11 @@ DD.ui = {
     S.dom.descendBtn.focus();
   },
   showBanner(title, html) {
+    const S = DD.state;
+    for (const el of [S.dom.lootDialog, S.dom.itemConfirmDialog, S.dom.itemOverlay, S.dom.overlay]) {
+      el.classList.remove('show'); el.innerHTML = '';
+    }
+    S.pendingLoot = []; S.selectedItemUnit = null; S.itemMode = null;
     const box = DD.state.dom.messageBanner;
     box.innerHTML = `<div class="modal"><h2>${title}</h2>${html}</div>`;
     box.classList.add('show');

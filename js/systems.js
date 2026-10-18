@@ -116,7 +116,14 @@ DD.systems = {
   grantRandomChestItem() {
     const keys = Object.keys(DD.data.itemDefs);
     const item = DD.utils.choice(keys);
-    DD.state.inventory[item] += 1;
+    const S = DD.state;
+    S.inventory[item] += 1;
+    S.nextItemUnitId = (S.nextItemUnitId || 0) + 1;
+    S.itemUnits = S.itemUnits || [];
+    S.itemUnits.push({ id: S.nextItemUnitId, key: item });
+    S.pendingLoot = S.pendingLoot || [];
+    S.pendingLoot.push({ key: item });
+    DD.ui.flashChest();
     this.addLog(`宝箱から「${DD.data.itemDefs[item].name}」を入手～`, 'good');
     DD.ui.refreshHud();
   },
@@ -156,7 +163,7 @@ DD.systems = {
       }
     }
     if (S.mode === 'boss' && DD.board.bossCleared(board)) this.winRun();
-    DD.ui.maybeShowExitPrompt();
+    DD.ui.resumePendingDialogs();
   },
   chordTile(x, y) {
     const S = DD.state;
@@ -707,10 +714,17 @@ DD.systems = {
     else DD.ui.closeLevelChoices();
     DD.ui.refreshHud();
   },
+  consumeItemUnit(key) {
+    const S = DD.state, units = S.itemUnits || [];
+    let index = units.findIndex(u => u.id === S.selectedItemUnit && u.key === key);
+    if (index < 0) index = units.findIndex(u => u.key === key);
+    if (index >= 0) units.splice(index, 1);
+  },
   useInstantItem(itemKey) {
     const S = DD.state;
     if (itemKey === 'heal' && S.inventory.heal > 0) {
       S.inventory.heal -= 1;
+      this.consumeItemUnit('heal');
       S.player.hp = Math.min(S.player.maxHp, S.player.hp + 30);
       this.addLog('回復薬を使ってHPを30回復～', 'good');
       DD.ui.refreshHud();
@@ -756,6 +770,7 @@ DD.systems = {
       });
       this.addLog('透視の巻物で周囲の地形を見通した～', 'good');
     }
+    this.consumeItemUnit(itemKey);
     DD.ui.clearItemMode();
     DD.ui.refreshHud();
   },
