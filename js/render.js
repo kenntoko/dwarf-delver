@@ -95,8 +95,14 @@ DD.render = {
       ctx.globalAlpha = 1;
 
       if (t.isExit && (DD.state.discoveredExit || t.isOpen)) {
-        ctx.fillStyle = colors.exit;
-        ctx.fillRect(px + TILE * 0.25, py + 6, TILE * 0.5, TILE - 12);
+        ctx.save();
+        ctx.imageSmoothingEnabled = false;
+        const iconSize = Math.min(32, TILE);
+        this.drawImageOrFallback('exit_ladder', () => {
+          ctx.fillStyle = colors.exit;
+          ctx.fillRect(px + TILE * 0.25, py + 6, TILE * 0.5, TILE - 12);
+        }, px + (TILE - iconSize) / 2, py + (TILE - iconSize) / 2, iconSize, iconSize);
+        ctx.restore();
       }
       if (!t.isOpen && t.flagged) {
         this.drawImageOrFallback('flag', () => {
@@ -122,8 +128,9 @@ DD.render = {
       if (t.isOpen) {
         if (t.number > 0) {
           ctx.fillStyle = nums[t.number] || '#fff';
-          ctx.font = 'bold 22px sans-serif'; ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
-          ctx.fillText(String(t.number), px + TILE / 2, py + TILE / 2 + 1);
+          ctx.font = t.isExit ? 'bold 12px sans-serif' : 'bold 22px sans-serif';
+          ctx.textAlign = t.isExit ? 'left' : 'center'; ctx.textBaseline = t.isExit ? 'top' : 'middle';
+          ctx.fillText(String(t.number), t.isExit ? px + 1 : px + TILE / 2, t.isExit ? py + 1 : py + TILE / 2 + 1);
         }
         if (t.chest) this.drawImageOrFallback('chest', () => {
           ctx.fillStyle = colors.chest; ctx.fillRect(px + 9, py + 12, 18, 12); ctx.strokeStyle = '#6f5b15'; ctx.strokeRect(px + 9, py + 12, 18, 12);
