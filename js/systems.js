@@ -180,14 +180,23 @@ DD.systems = {
     if (S.floor === 2) return ['slime', 'bat'];
     return ['slime', 'bat', 'goblin'];
   },
-  frontierSpawnTiles() {
+  frontierSpawnTiles(enemyType = null) {
     const S = DD.state;
     const board = S.board;
     const list = [];
     const p = S.playerPos();
+    let reachable = null;
+    if (enemyType === 'slime') {
+      reachable = new Set([DD.utils.key(board.entry.x, board.entry.y)]);
+      const queue = [[board.entry.x, board.entry.y]];
+      for (let i = 0; i < queue.length; i++) for (const [nx,ny] of DD.utils.neighbors4(...queue[i])) {
+        const key = DD.utils.key(nx,ny), tile = board.grid[ny][nx];
+        if (tile.active && tile.isOpen && !reachable.has(key)) { reachable.add(key); queue.push([nx,ny]); }
+      }
+    }
     for (let y = 0; y < DD.config.H; y++) for (let x = 0; x < DD.config.W; x++) {
       const t = board.grid[y][x];
-      if (!t.active || !t.isOpen) continue;
+      if (!t.active || !t.isOpen || (reachable && !reachable.has(DD.utils.key(x,y)))) continue;
       let isFrontier = false;
       DD.utils.neighbors4(x, y).forEach(([nx, ny]) => {
         const nt = board.grid[ny][nx];
@@ -208,7 +217,7 @@ DD.systems = {
     if (S.mode === 'boss') {
       spawn = { x: -1, y: -1, cx: DD.config.boardRect.x + DD.utils.randInt(2, DD.config.W - 3) * DD.config.TILE + DD.config.TILE / 2, cy: DD.config.boardRect.y - 20 };
     } else {
-      const frontier = this.frontierSpawnTiles();
+      const frontier = this.frontierSpawnTiles(type);
       if (!frontier.length) return;
       spawn = DD.utils.choice(frontier);
     }
@@ -296,12 +305,34 @@ DD.systems = {
     }
     return true;
   },
-  slimeSegmentClear(fromX, fromY, toX, toY, radius) {
-    const distance = Math.hypot(toX - fromX, toY - fromY);
-    const steps = Math.max(1, Math.ceil(distance / 2));
-    for (let i = 0; i <= steps; i++) {
-      const t = i / steps;
-      if (!this.slimePositionClear(fromX + (toX - fromX) * t, fromY + (toY - fromY) * t, radius)) return false;
+  slimeSegmentClear(ax, ay, bx, by, radius) {
+    const { TILE, boardRect, W, H } = DD.config;
+    const grid = DD.state.board.grid;
+    const vx = bx - ax, vy = by - ay, length2 = vx * vx + vy * vy;
+    const pointDistance = (x,y) => {
+      const t = length2 ? Math.max(0,Math.min(1,((x-ax)*vx+(y-ay)*vy)/length2)) : 0;
+      return (x-ax-vx*t)**2 + (y-ay-vy*t)**2;
+    };
+    const threshold = radius * radius - 0.001;
+    for (let y = Math.floor((Math.min(ay,by)-radius-boardRect.y)/TILE); y <= Math.floor((Math.max(ay,by)+radius-boardRect.y)/TILE); y++) {
+      for (let x = Math.floor((Math.min(ax,bx)-radius-boardRect.x)/TILE); x <= Math.floor((Math.max(ax,bx)+radius-boardRect.x)/TILE); x++) {
+        if (x>=0 && x<W && y>=0 && y<H && grid[y][x].active && grid[y][x].isOpen) continue;
+        const left=boardRect.x+x*TILE, right=left+TILE, top=boardRect.y+y*TILE, bottom=top+TILE;
+        let enter=0,leave=1,intersects=true;
+        for (const [origin,delta,min,max] of [[ax,vx,left,right],[ay,vy,top,bottom]]) {
+          if (Math.abs(delta)<1e-12) { if(origin<min||origin>max) intersects=false; }
+          else {
+            const p=(min-origin)/delta,q=(max-origin)/delta;
+            enter=Math.max(enter,Math.min(p,q)); leave=Math.min(leave,Math.max(p,q));
+          }
+        }
+        if (intersects && enter<=leave) return false;
+        for (const [px,py] of [[ax,ay],[bx,by]]) {
+          const dx=px-Math.max(left,Math.min(px,right)),dy=py-Math.max(top,Math.min(py,bottom));
+          if(dx*dx+dy*dy<threshold) return false;
+        }
+        if (Math.min(pointDistance(left,top),pointDistance(right,top),pointDistance(left,bottom),pointDistance(right,bottom))<threshold) return false;
+      }
     }
     return true;
   },
@@ -329,6 +360,8 @@ DD.systems = {
     return best || hero;
   },
   separateSlime(enemy, dt) {
+    const hero = DD.state.playerPos();
+    if (Math.hypot(enemy.x - hero.x, enemy.y - hero.y) > DD.config.TILE * 3) return;
     let dx = 0, dy = 0;
     for (const other of DD.state.enemies || []) {
       if (other === enemy || other.type !== 'slime' || other.alive === false) continue;
@@ -349,6 +382,28 @@ DD.systems = {
       enemy.x = x; enemy.y = y;
     }
   },
+  recoverSlime(enemy) {
+    const distance = DD.config.TILE / 4;
+    const target = enemy.navTarget || DD.utils.tileCenter(enemy.tileX, enemy.tileY);
+    let best = null, bestScore = Infinity;
+    const directions = [[1,0], [0,1], [-1,0], [0,-1]];
+    const start = enemy.recoveryDirection || 0;
+    for (let i = 0; i < 4; i++) {
+      const direction = (start + i) % 4, [dx,dy] = directions[direction];
+      const point = { x: enemy.x + dx * distance, y: enemy.y + dy * distance };
+      if (!this.slimeSegmentClear(enemy.x, enemy.y, point.x, point.y, DD.data.enemyDefs.slime.size)) continue;
+      const score = Math.hypot(point.x-target.x, point.y-target.y) + i * 0.01;
+      if (score < bestScore) { bestScore=score; best={...point,direction}; }
+    }
+    enemy.stillTime = 0;
+    if (!best) return false;
+    enemy.escapeTarget = best;
+    enemy.recoveryDirection = (best.direction + 1) % 4;
+    enemy.navTarget = null;
+    enemy.path = [];
+    enemy.repath = 0;
+    return true;
+  },
   updateSlime(enemy, dt) {
     const S = DD.state, def = DD.data.enemyDefs.slime;
     const { TILE, boardRect } = DD.config;
@@ -357,6 +412,24 @@ DD.systems = {
     enemy.tileY = Math.floor((enemy.y - boardRect.y) / TILE);
     const hero = S.playerPos();
     const goal = this.slimeApproachPoint(enemy, hero);
+    const atContact = Math.hypot(goal.x-enemy.x, goal.y-enemy.y) < (enemy.meleeSpot ? 5 : 19);
+    const moved = enemy.lastMotionX == null ? Infinity : Math.hypot(enemy.x-enemy.lastMotionX, enemy.y-enemy.lastMotionY);
+    enemy.lastMotionX=enemy.x; enemy.lastMotionY=enemy.y;
+    enemy.stillTime = atContact || enemy.attackAnimTimer < 0.48 || moved > 0.05 ? 0 : (enemy.stillTime || 0) + dt;
+    if (enemy.stillTime >= 0.9) this.recoverSlime(enemy);
+    if (enemy.escapeTarget) {
+      const target=enemy.escapeTarget, dx=target.x-enemy.x, dy=target.y-enemy.y, distance=Math.hypot(dx,dy);
+      if (distance < 0.5) enemy.escapeTarget=null;
+      else {
+        const travel=Math.min(distance, DD.config.baseEnemySpeed * dt);
+        const x=enemy.x+dx/distance*travel, y=enemy.y+dy/distance*travel;
+        if (this.slimeSegmentClear(enemy.x,enemy.y,x,y,radius)) { enemy.x=x;enemy.y=y; }
+        else enemy.escapeTarget=null;
+        enemy.tileX=Math.floor((enemy.x-boardRect.x)/TILE);
+        enemy.tileY=Math.floor((enemy.y-boardRect.y)/TILE);
+        return;
+      }
+    }
     this.separateSlime(enemy, dt);
     const direct = this.slimeSegmentClear(enemy.x, enemy.y, goal.x, goal.y, radius);
     if (direct && Math.hypot(goal.x - enemy.x, goal.y - enemy.y) < (enemy.meleeSpot ? 4 : 18)) {
@@ -370,21 +443,25 @@ DD.systems = {
       return;
     }
     let target = direct ? goal : null;
-    if (!direct) {
-      if (enemy.repath <= 0 || !enemy.path || !enemy.path.length ||
-          enemy.pathTileX !== enemy.tileX || enemy.pathTileY !== enemy.tileY) {
+    if (direct) enemy.navTarget = null;
+    else {
+      const waypoint = enemy.navTarget;
+      if (waypoint && Math.hypot(waypoint.x - enemy.x, waypoint.y - enemy.y) > 0.5 &&
+          this.slimeSegmentClear(enemy.x, enemy.y, waypoint.x, waypoint.y, radius)) {
+        target = waypoint;
+      } else {
+        enemy.navTarget = null;
         enemy.path = this.computePath({ x: enemy.tileX, y: enemy.tileY }, S.board.entry);
-        enemy.repath = 0.6;
-        enemy.pathTileX = enemy.tileX;
-        enemy.pathTileY = enemy.tileY;
-      }
-      // Grid routing finds the corridor; visibility smoothing skips its cell centers.
-      // Steering toward the farthest visible point gives any-angle movement.
-      for (let i = enemy.path.length - 1; i >= 0; i--) {
-        const point = DD.utils.tileCenter(enemy.path[i].x, enemy.path[i].y);
-        if (this.slimeSegmentClear(enemy.x, enemy.y, point.x, point.y, radius)) {
-          target = point;
-          break;
+        // Include the current cell center to safely round tight corners.
+        const route = [{ x: enemy.tileX, y: enemy.tileY }, ...enemy.path];
+        for (let i = route.length - 1; i >= 0; i--) {
+          const point = DD.utils.tileCenter(route[i].x, route[i].y);
+          if (Math.hypot(point.x - enemy.x, point.y - enemy.y) <= 0.5) continue;
+          if (this.slimeSegmentClear(enemy.x, enemy.y, point.x, point.y, radius)) {
+            enemy.navTarget = point;
+            target = point;
+            break;
+          }
         }
       }
       if (!target) target = DD.utils.tileCenter(enemy.tileX, enemy.tileY);
@@ -404,6 +481,7 @@ DD.systems = {
       const ny = enemy.y + dy / distance * travel / steps;
       if (!this.slimePositionClear(nx, ny, radius)) {
         enemy.repath = 0;
+        enemy.navTarget = null;
         break;
       }
       enemy.x = nx;

@@ -98,7 +98,7 @@ DD.render = {
         ctx.save();
         ctx.imageSmoothingEnabled = false;
         const iconSize = Math.min(32, TILE);
-        this.drawImageOrFallback('exit_ladder', () => {
+        this.drawImageOrFallback('exit_ladder_v2', () => {
           ctx.fillStyle = colors.exit;
           ctx.fillRect(px + TILE * 0.25, py + 6, TILE * 0.5, TILE - 12);
         }, px + (TILE - iconSize) / 2, py + (TILE - iconSize) / 2, iconSize, iconSize);

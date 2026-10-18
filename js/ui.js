@@ -149,6 +149,10 @@ DD.ui = {
     for (const enemy of S.enemies) {
       if (enemy.type !== 'slime') continue;
       enemy.path = [];
+      enemy.navTarget = null;
+      enemy.escapeTarget = null;
+      enemy.stillTime = 0;
+      enemy.lastMotionX = null;
       enemy.repath = 0;
       enemy.pathTileX = null;
       enemy.pathTileY = null;
