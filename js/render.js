@@ -105,11 +105,20 @@ DD.render = {
         ctx.restore();
       }
       if (!t.isOpen && t.flagged) {
-        this.drawImageOrFallback('flag', () => {
-          ctx.fillStyle = colors.flag;
-          ctx.fillRect(px + 17, py + 8, 4, 18);
-          ctx.beginPath(); ctx.moveTo(px + 20, py + 10); ctx.lineTo(px + 30, py + 16); ctx.lineTo(px + 20, py + 22); ctx.closePath(); ctx.fill();
-        }, px + 8, py + 6, 20, 24);
+        ctx.save();
+        ctx.imageSmoothingEnabled = false;
+        const size = Math.min(32, TILE - 2);
+        this.drawImageOrFallback('warning_sign', () => {
+          ctx.fillStyle = '#3a2114'; ctx.fillRect(px + TILE/2 - 2, py + 20, 4, 12);
+          ctx.fillStyle = '#241b16'; ctx.fillRect(px + 3, py + 3, TILE - 6, 22);
+          ctx.fillStyle = '#fff3da'; ctx.fillRect(px + 5, py + 5, TILE - 10, 18);
+          ctx.fillStyle = '#d82e28';
+          for (let i = 0; i < 6; i++) {
+            ctx.fillRect(px + 10 + i*2, py + 8 + i*2, 4, 4);
+            ctx.fillRect(px + TILE - 14 - i*2, py + 8 + i*2, 4, 4);
+          }
+        }, px + (TILE - size)/2, py + (TILE - size)/2, size, size);
+        ctx.restore();
       }
       if (!t.isOpen && t.reinforced) {
         ctx.strokeStyle = colors.reinforce; ctx.lineWidth = 3; ctx.strokeRect(px + 4, py + 4, TILE - 8, TILE - 8); ctx.lineWidth = 1;
