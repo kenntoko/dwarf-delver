@@ -12,7 +12,7 @@ DD.assets = {
           loaded += 1;
           if (loaded >= total) resolve();
         };
-        img.src = `./assets/${name}.${(name.startsWith('hero_') || name.startsWith('cave_') || name === 'slime_sheet' || name === 'goblin_break_meter' || name === 'exit_ladder_v2' || name === 'warning_sign') ? 'png' : 'svg'}`;
+        img.src = `./assets/${name.startsWith('hero_') ? name + '_v2' : name}.${(name.startsWith('hero_') || name.startsWith('cave_') || name === 'slime_sheet' || name === 'goblin_break_meter' || name === 'exit_ladder_v2' || name === 'warning_sign') ? 'png' : 'svg'}`;
         this.images[name] = img;
       });
     });
