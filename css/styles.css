@@ -175,7 +175,7 @@ canvas {
 .level-readout { position:static; transform:none; margin:0 0 0 10px; height:14px; }
 
 /* Inventory pixels match the two-CSS-pixel cells of the Lv glyphs. */
-@font-face{font-family:ItemDot;src:url('../assets/item-ui-dot.ttf') format('truetype');font-display:block}
+@font-face{font-family:ItemDot;src:url('../assets/chest-ui-dot.ttf') format('truetype');font-display:block}
 #inventoryDock{position:absolute;right:8px;top:6px;left:8px;z-index:10;display:flex;flex-direction:row-reverse;flex-wrap:wrap;gap:4px;pointer-events:none}
 .item-slot{width:40px;height:40px;flex:0 0 40px;padding:2px;border:2px solid #a48957;border-radius:0;background:#231d17;cursor:pointer;pointer-events:auto}
 .item-slot img{width:32px;height:32px;display:block;image-rendering:pixelated}
@@ -193,3 +193,15 @@ canvas {
 #chestFlash.chest-flash{animation:chest-flash .3s steps(1,end)}
 @keyframes chest-flash{0%{opacity:.85}25%{opacity:.45}55%{opacity:.15}100%{opacity:0}}
 @media(prefers-reduced-motion:reduce){#chestFlash.chest-flash{animation:none}}
+
+/* Fixed item type order, with zero-count types omitted. */
+#inventoryDock{flex-direction:row;justify-content:flex-end}
+.item-slot{height:52px;position:relative}
+.inventory-count{position:static;transform:none;justify-content:center;height:10px;margin-top:2px;gap:2px}
+#lootDialog.chest-cinematic{background:rgba(7,5,4,.94)}
+.chest-stage{display:flex;justify-content:center;align-items:center;min-height:280px}
+#chestOpeningCanvas{width:256px;height:256px;background:transparent;image-rendering:pixelated;position:relative;z-index:0}
+#chestWhiteout{position:fixed;inset:0;background:white;opacity:0;pointer-events:none;z-index:1}
+.chest-reward{position:relative;z-index:2;color:#24190f;border:0;box-shadow:none;background:transparent;max-width:480px}
+.chest-reward-icon{width:128px;height:128px;image-rendering:pixelated;display:block;margin:auto}
+.chest-reward button{display:block;width:240px;max-width:100%;margin:20px auto 0;background:#f1dfb8;color:#24190f;border:2px solid #7e6037;border-radius:0}

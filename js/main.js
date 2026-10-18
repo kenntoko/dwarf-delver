@@ -32,6 +32,9 @@ DD.main = {
         DD.ui.refreshHud();
         return;
       }
+      if (e.button === 0 && tile.isOpen && tile.chest) {
+        DD.systems.openChest(gx, gy); return;
+      }
       if (!DD.board.validDigTarget(S.board, gx, gy, S.mode)) return;
       DD.systems.openTile(gx, gy);
       DD.ui.refreshHud();

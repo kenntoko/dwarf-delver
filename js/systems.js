@@ -19,6 +19,7 @@ DD.systems = {
     S.heroIdleTime = 0;
     S.heroHurtAge = 999;
     S.heroSweat = null;
+    S.activeChest = null;
     S.discoveredExit = false;
     S.readyToDescend = false;
     S.enemies = [];
@@ -113,19 +114,22 @@ DD.systems = {
     this.addLog('ゴーレムを攻略して討伐成功～', 'good');
     DD.ui.showBanner('クリア', `<p>プレリリース版クリアおめでと～</p><button class="messageButton" onclick="location.reload()">最初から遊ぶ</button>`);
   },
-  grantRandomChestItem() {
-    const keys = Object.keys(DD.data.itemDefs);
-    const item = DD.utils.choice(keys);
+  openChest(x, y) {
+    const S = DD.state;
+    if (S.paused || S.mode === 'lost' || S.mode === 'won' || !DD.utils.inBounds(x, y)) return;
+    const tile = S.board.grid[y][x];
+    if (!tile.active || !tile.isOpen || !tile.chest) return;
+    tile.chest = false;
+    S.activeChest = { key: DD.utils.choice(Object.keys(DD.data.itemDefs)), age: 0, rewardGranted: false };
+    DD.ui.startChestOpening();
+  },
+  grantChestItem(item) {
     const S = DD.state;
     S.inventory[item] += 1;
     S.nextItemUnitId = (S.nextItemUnitId || 0) + 1;
     S.itemUnits = S.itemUnits || [];
     S.itemUnits.push({ id: S.nextItemUnitId, key: item });
-    S.pendingLoot = S.pendingLoot || [];
-    S.pendingLoot.push({ key: item });
-    DD.ui.flashChest();
     this.addLog(`宝箱から「${DD.data.itemDefs[item].name}」を入手～`, 'good');
-    DD.ui.refreshHud();
   },
   openTile(x, y) {
     const S = DD.state;
@@ -145,10 +149,6 @@ DD.systems = {
       ct.autoHint = false;
       this.gainDigXp(ct.number * 10);
       if (S.mode === 'boss') S.bossWindowScore += ct.number * 10;
-      if (ct.chest) {
-        ct.chest = false;
-        this.grantRandomChestItem();
-      }
       if (ct.isExit && S.mode === 'dungeon') {
         S.discoveredExit = true;
         S.readyToDescend = true;
@@ -782,6 +782,7 @@ DD.systems = {
   },
   update(dt) {
     const S = DD.state;
+    DD.ui.updateChestOpening(dt);
     S.damageNumbers = (S.damageNumbers || []).filter(n => { n.age += dt; return n.age < 1; });
     if (S.heroSweat) {
       S.heroSweat.age += dt;

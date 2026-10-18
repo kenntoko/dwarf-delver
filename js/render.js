@@ -154,15 +154,26 @@ DD.render = {
         ctx.fillText(`地${t.surveyCount}`, px + 2, py + TILE - 4);
       }
       if (t.isOpen) {
-        if (t.number > 0) {
+        if (t.number > 0 && !t.chest) {
           ctx.fillStyle = nums[t.number] || '#fff';
-          ctx.font = t.isExit ? 'bold 12px sans-serif' : 'bold 22px sans-serif';
-          ctx.textAlign = t.isExit ? 'left' : 'center'; ctx.textBaseline = t.isExit ? 'top' : 'middle';
-          ctx.fillText(String(t.number), t.isExit ? px + 1 : px + TILE / 2, t.isExit ? py + 1 : py + TILE / 2 + 1);
+          ctx.font = (t.isExit || t.chest) ? 'bold 12px sans-serif' : 'bold 22px sans-serif';
+          ctx.textAlign = (t.isExit || t.chest) ? 'left' : 'center'; ctx.textBaseline = (t.isExit || t.chest) ? 'top' : 'middle';
+          ctx.fillText(String(t.number), (t.isExit || t.chest) ? px + 1 : px + TILE / 2, (t.isExit || t.chest) ? py + 1 : py + TILE / 2 + 1);
         }
-        if (t.chest) this.drawImageOrFallback('chest', () => {
+        if (t.chest) this.drawImageOrFallback('treasure_chest_closed', () => {
           ctx.fillStyle = colors.chest; ctx.fillRect(px + 9, py + 12, 18, 12); ctx.strokeStyle = '#6f5b15'; ctx.strokeRect(px + 9, py + 12, 18, 12);
-        }, px + 8, py + 10, 20, 16);
+        }, px + (TILE - 32) / 2, py + (TILE - 32) / 2, 32, 32);
+        if (t.chest && t.number > 0) {
+          const digits = { 1:['010','110','010','010','111'],2:['111','001','111','100','111'],
+            3:['111','001','111','001','111'],4:['101','101','111','001','001'],
+            5:['111','100','111','001','111'],6:['111','100','111','101','111'],
+            7:['111','001','010','010','010'],8:['111','101','111','101','111'] };
+          ctx.fillStyle = '#17120f'; ctx.fillRect(px + 1, py + 1, 8, 12);
+          ctx.fillStyle = nums[t.number] || '#ffffff';
+          digits[t.number].forEach((row,y) => [...row].forEach((bit,x) => {
+            if (bit === '1') ctx.fillRect(px + 2 + x * 2, py + 2 + y * 2, 2, 2);
+          }));
+        }
       }
     }
   },
@@ -174,9 +185,9 @@ DD.render = {
     const cx = boardRect.x + (S.board.entry.x + 0.5) * TILE;
     const top = boardRect.y + S.board.entry.y * TILE;
     ctx.save();
-    ctx.translate(cx, top);
+    ctx.translate(cx, top - 64);
     ctx.scale(TILE / 36, TILE / 36);
-    // The cave sits in the margin above the entry cell, clear of the player.
+    // Keep the cave above the 96px hero, with enough top margin to show the full arch.
     ctx.beginPath();
     ctx.moveTo(-35, 0); ctx.lineTo(-34, -20); ctx.lineTo(-28, -20);
     ctx.lineTo(-28, -37); ctx.lineTo(-19, -37); ctx.lineTo(-19, -48);

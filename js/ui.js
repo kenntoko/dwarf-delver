@@ -7,7 +7,6 @@ DD.ui = {
       inventoryDock: document.getElementById('inventoryDock'),
       lootDialog: document.getElementById('lootDialog'),
       itemConfirmDialog: document.getElementById('itemConfirmDialog'),
-      chestFlash: document.getElementById('chestFlash'),
       overlay: document.getElementById('overlay'),
       itemOverlay: document.getElementById('itemOverlay'),
       messageBanner: document.getElementById('messageBanner'),
@@ -37,13 +36,13 @@ DD.ui = {
       if (button) this.confirmItem(Number(button.dataset.unit));
     });
     window.addEventListener('keydown', (e) => {
-      if (['loot', 'item-confirm'].includes(S.pauseReason)) {
+      if (['chest', 'item-confirm'].includes(S.pauseReason)) {
         if (e.key === 'Escape' && S.pauseReason === 'item-confirm') this.cancelItemConfirm();
         if (e.key === 'Tab') {
-          const box = S.pauseReason === 'loot' ? S.dom.lootDialog : S.dom.itemConfirmDialog;
+          const box = S.pauseReason === 'chest' ? S.dom.lootDialog : S.dom.itemConfirmDialog;
           const buttons = [...box.querySelectorAll('button')];
           const i = buttons.indexOf(document.activeElement); e.preventDefault();
-          buttons[(i + (e.shiftKey ? -1 : 1) + buttons.length) % buttons.length].focus();
+          if (buttons.length) buttons[(i + (e.shiftKey ? -1 : 1) + buttons.length) % buttons.length].focus();
         }
         return;
       }
@@ -62,49 +61,78 @@ DD.ui = {
   },
 
   itemIcon(key) { return './assets/item_' + key + '_16.png'; },
+
   renderInventory() {
     const S = DD.state, dock = S.dom.inventoryDock;
-    S.itemUnits = S.itemUnits || [];
-    const signature = S.itemUnits.map(u => u.id + ':' + u.key).join(',') + ':' + S.paused;
+    const order = ['reinforce', 'survey', 'clairvoyance', 'heal'];
+    const keys = order.filter(key => S.inventory[key] > 0);
+    const disabled = S.paused || S.mode === 'lost' || S.mode === 'won';
+    const signature = keys.map(key => key + ':' + S.inventory[key]).join(',') + ':' + disabled;
     if (dock.dataset.signature === signature) return;
     dock.dataset.signature = signature;
-    dock.innerHTML = S.itemUnits.map(u => '<button type="button" class="item-slot" data-unit="' + u.id +
-      '" aria-label="' + DD.data.itemDefs[u.key].name + 'を使用" title="' + DD.data.itemDefs[u.key].name +
-      '"' + (S.paused || S.mode === 'lost' || S.mode === 'won' ? ' disabled' : '') + '><img src="' +
-      this.itemIcon(u.key) + '" width="32" height="32" alt=""></button>').join('');
-  },
-  flashChest() {
-    const el = DD.state.dom.chestFlash;
-    el.classList.remove('chest-flash'); void el.offsetWidth; el.classList.add('chest-flash');
+    dock.hidden = keys.length === 0;
+    dock.innerHTML = keys.map(key => {
+      const unit = (S.itemUnits || []).find(u => u.key === key);
+      return '<button type="button" class="item-slot" data-unit="' + (unit ? unit.id : '') +
+        '" aria-label="' + DD.data.itemDefs[key].name + 'を使用（所持' + S.inventory[key] + '個）" title="' +
+        DD.data.itemDefs[key].name + '"' + (disabled ? ' disabled' : '') + '><img src="' + this.itemIcon(key) +
+        '" width="32" height="32" alt=""><span class="meter-number inventory-count" id="item-count-' +
+        key + '" aria-hidden="true"></span></button>';
+    }).join('');
+    for (const key of keys) this.renderMeterValue(document.getElementById('item-count-' + key), String(S.inventory[key]), '');
   },
   resumePendingDialogs() {
     const S = DD.state;
     if (S.paused || S.mode === 'lost' || S.mode === 'won') return;
     if (S.pendingLevelBonuses > 0) { this.offerLevelChoices(); return; }
-    if (S.pendingLoot && S.pendingLoot.length) { this.showChestLoot(); return; }
     this.maybeShowExitPrompt();
   },
-  showChestLoot() {
-    const S = DD.state;
-    if (S.paused || !S.pendingLoot || !S.pendingLoot.length) return;
-    const loot = S.pendingLoot[0], def = DD.data.itemDefs[loot.key];
-    S.itemReturnFocus = document.activeElement;
-    S.paused = true; S.pauseReason = 'loot';
-    S.dom.lootDialog.innerHTML = '<div class="modal pixel-item-ui" role="dialog" aria-modal="true" aria-labelledby="lootTitle">' +
-      '<h2 id="lootTitle">宝箱から入手しました</h2><img class="loot-icon" src="' + this.itemIcon(loot.key) +
-      '" alt=""><p>' + def.name + ' ×1</p><button class="messageButton" id="lootOk">OK</button></div>';
-    S.dom.lootDialog.classList.add('show');
-    document.getElementById('lootOk').onclick = () => this.acknowledgeLoot();
-    document.getElementById('lootOk').focus();
-    this.refreshHud();
+  startChestOpening() {
+    const S = DD.state, box = S.dom.lootDialog;
+    S.paused = true; S.pauseReason = 'chest';
+    box.innerHTML = '<div class="chest-stage" role="dialog" aria-modal="true" aria-label="宝箱を開けています">' +
+      '<canvas id="chestOpeningCanvas" width="256" height="256" aria-hidden="true"></canvas>' +
+      '<div id="chestWhiteout" aria-hidden="true"></div>' +
+      '<div id="chestReward" class="pixel-item-ui chest-reward" hidden></div></div>';
+    box.classList.add('show', 'chest-cinematic');
+    box.tabIndex = -1; box.focus();
+    this.updateChestOpening(0); this.refreshHud();
   },
-  acknowledgeLoot() {
+  updateChestOpening(dt) {
+    const S = DD.state, event = S.activeChest;
+    if (!event || S.pauseReason !== 'chest') return;
+    event.age += dt;
+    const canvas = document.getElementById('chestOpeningCanvas');
+    const sheet = DD.assets.get('treasure_chest_sheet');
+    if (canvas && sheet && sheet.complete && sheet.naturalWidth > 0) {
+      const ctx = canvas.getContext('2d');
+      const frame = Math.min(7, Math.floor(Math.max(0, event.age - 0.35) / 0.12));
+      ctx.clearRect(0, 0, 256, 256); ctx.imageSmoothingEnabled = false;
+      ctx.drawImage(sheet, frame % 4 * 64, Math.floor(frame / 4) * 64, 64, 64, 0, 0, 256, 256);
+    }
+    // Deliberate stepped whiteout; the chest itself only changes sprite frames.
+    const whiteout = document.getElementById('chestWhiteout');
+    if (whiteout) whiteout.style.opacity = Math.min(4, Math.max(0, Math.floor((event.age - 1.3) / 0.075))) / 4;
+    if (event.age >= 1.85 && !event.rewardGranted) {
+      event.rewardGranted = true;
+      DD.systems.grantChestItem(event.key);
+      const reward = document.getElementById('chestReward');
+      canvas.hidden = true;
+      reward.innerHTML = '<img class="chest-reward-icon" src="' + this.itemIcon(event.key) +
+        '" alt=""><p>宝箱から入手しました</p><p>' + DD.data.itemDefs[event.key].name +
+        ' ×1</p><button class="messageButton" id="chestRewardOk">OK</button>';
+      reward.hidden = false;
+      document.getElementById('chestRewardOk').onclick = () => this.finishChestOpening();
+      document.getElementById('chestRewardOk').focus();
+      this.refreshHud();
+    }
+  },
+  finishChestOpening() {
     const S = DD.state;
-    if (S.pauseReason !== 'loot') return;
-    S.pendingLoot.shift();
-    S.dom.lootDialog.classList.remove('show'); S.dom.lootDialog.innerHTML = '';
+    if (S.pauseReason !== 'chest' || !S.activeChest || !S.activeChest.rewardGranted) return;
+    S.activeChest = null;
+    S.dom.lootDialog.classList.remove('show', 'chest-cinematic'); S.dom.lootDialog.innerHTML = '';
     S.paused = false; S.pauseReason = ''; S.lastTimeStamp = 0;
-    if (S.itemReturnFocus && S.itemReturnFocus.isConnected) S.itemReturnFocus.focus();
     this.resumePendingDialogs(); this.refreshHud();
   },
   itemTerms(key) {
@@ -340,7 +368,7 @@ DD.ui = {
     for (const el of [S.dom.lootDialog, S.dom.itemConfirmDialog, S.dom.itemOverlay, S.dom.overlay]) {
       el.classList.remove('show'); el.innerHTML = '';
     }
-    S.pendingLoot = []; S.selectedItemUnit = null; S.itemMode = null;
+    S.activeChest = null; S.selectedItemUnit = null; S.itemMode = null;
     const box = DD.state.dom.messageBanner;
     box.innerHTML = `<div class="modal"><h2>${title}</h2>${html}</div>`;
     box.classList.add('show');
