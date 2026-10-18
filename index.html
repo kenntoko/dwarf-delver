@@ -4,7 +4,7 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Dwarf Delver Pre-release</title>
-  <link rel="stylesheet" href="./css/styles.css?v=stacked-vitals-1" />
+  <link rel="stylesheet" href="./css/styles.css?v=level-under-exp-1" />
 </head>
 <body>
   <div id="app">
@@ -22,6 +22,7 @@
       <div class="panel top-vitals" aria-label="主人公のHPと経験値">
         <div class="pixel-meter" id="hpMeter"><div class="meter-track hp-track"><div id="hpBar" class="meter-art hpFill"></div><span id="hpText" class="meter-number" aria-label="HP:100/100">HP:100/100</span></div></div>
         <div class="pixel-meter"><div class="meter-track xp-track"><div id="xpBar" class="meter-art xpFill"></div><span id="xpText" class="meter-number" aria-label="EXP:NEXT→100">EXP:NEXT→100</span></div></div>
+        <div id="levelText" class="meter-number level-readout" aria-label="Lv.1">Lv.1</div>
       </div>
       <div id="boardWrap">
         <canvas id="gameCanvas" width="1200" height="800"></canvas>
@@ -36,7 +37,6 @@
       <div class="panel">
         <h2>主人公</h2>
         <div class="miniGrid">
-          <div class="upgradeItem">Lv <strong id="levelText">1</strong></div>
           <div class="upgradeItem">防御 <strong id="defText">0%</strong></div>
           <div class="upgradeItem">精霊 <strong id="dwarfText">1</strong></div>
           <div class="upgradeItem">出現間隔 <strong id="spawnText">9.00s</strong></div>
@@ -74,7 +74,7 @@
   <script src="./js/state.js"></script>
   <script src="./js/board.js?v=exit-choice-1"></script>
   <script src="./js/systems.js?v=slime-unlock-2"></script>
-  <script src="./js/ui.js?v=next-exp-1"></script>
+  <script src="./js/ui.js?v=level-under-exp-1"></script>
   <script src="./js/render.js?v=warning-sign-contrast-1"></script>
   <script src="./js/main.js?v=chord-1"></script>
 </body>

@@ -53,6 +53,7 @@ DD.ui = {
       '6':['111','100','111','101','111'],'7':['111','001','010','010','010'],
       '8':['111','101','111','101','111'],'9':['111','101','111','001','111'],
       '/':['001','001','010','100','100'],'.':['000','000','000','000','010'],
+      'L':['100','100','100','100','111'],'v':['000','000','101','101','010'],
       'H':['101','101','111','101','101'],'P':['110','101','110','100','100'],
       'E':['111','100','110','100','111'],'X':['101','101','010','101','101'],
       'N':['101','111','111','111','101'],'T':['111','010','010','010','010'],
@@ -84,7 +85,7 @@ DD.ui = {
     this.renderMeterValue(D.hpText, `HP:${Math.ceil(S.player.hp)}/${S.player.maxHp}`, '');
     D.xpBar.style.clipPath = `inset(0 ${100 - DD.utils.clamp(S.player.xp / S.player.nextXp * 100, 0, 100)}% 0 0)`;
     this.renderMeterValue(D.xpText, `EXP:NEXT→${Math.max(0, S.player.nextXp - S.player.xp)}`, '');
-    D.levelText.textContent = S.player.level;
+    this.renderMeterValue(D.levelText, `Lv.${S.player.level}`, '');
     D.defText.textContent = `${S.player.upgrades.defense * 8}%`;
     D.dwarfText.textContent = S.player.upgrades.summon;
     D.spawnText.textContent = `${DD.systems.currentSpawnInterval().toFixed(2)}s`;
