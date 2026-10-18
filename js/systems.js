@@ -55,14 +55,15 @@ DD.systems = {
     const S = DD.state;
     if (amount <= 0) return;
     S.player.xp += amount;
-    let leveled = false;
+    let levelsGained = 0;
     while (S.player.xp >= S.player.nextXp) {
       S.player.xp -= S.player.nextXp;
       S.player.level += 1;
       S.player.nextXp = Math.round(S.player.nextXp * 1.25);
-      leveled = true;
+      levelsGained += 1;
     }
-    if (leveled) {
+    if (levelsGained > 0) {
+      S.pendingLevelBonuses = (S.pendingLevelBonuses || 0) + levelsGained;
       this.addLog(`レベルアップ～。Lv${S.player.level} になったよ～`, 'good');
       DD.ui.offerLevelChoices();
     }
@@ -683,16 +684,21 @@ DD.systems = {
     S.board.grid[y][x].autoHint = true;
     this.addLog('探索の眼が安全なマスを見つけた～', 'good');
   },
-  applyUpgrade(key) {
+  applyUpgrade(key, choiceId) {
     const S = DD.state;
-    if (S.player.upgrades[key] >= DD.data.upgradeDefs[key].max) return;
+    if (S.pauseReason !== 'levelup' || !S.pendingChoices || !S.pendingChoices.includes(key) ||
+        !(S.pendingLevelBonuses > 0) || (choiceId != null && choiceId !== S.levelChoiceId)) return;
+    if (!DD.data.upgradeDefs[key] || S.player.upgrades[key] >= DD.data.upgradeDefs[key].max) return;
     S.player.upgrades[key] += 1;
     if (key === 'vitality') {
       S.player.maxHp += 20;
       S.player.hp = Math.min(S.player.maxHp, S.player.hp + 20);
     }
     this.addLog(`${DD.data.upgradeDefs[key].name} を強化した～`, 'good');
-    DD.ui.closeLevelChoices();
+    S.pendingLevelBonuses -= 1;
+    S.pendingChoices = null;
+    if (S.pendingLevelBonuses > 0) DD.ui.offerLevelChoices();
+    else DD.ui.closeLevelChoices();
     DD.ui.refreshHud();
   },
   useInstantItem(itemKey) {

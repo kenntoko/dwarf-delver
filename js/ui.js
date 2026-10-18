@@ -53,6 +53,8 @@ DD.ui = {
       '6':['111','100','111','101','111'],'7':['111','001','010','010','010'],
       '8':['111','101','111','101','111'],'9':['111','101','111','001','111'],
       '/':['001','001','010','100','100'],'.':['000','000','000','000','010'],
+      'B':['110','101','110','101','110'],'O':['111','101','101','101','111'],
+      'U':['101','101','101','101','111'],'S':['111','100','111','001','111'],
       'L':['100','100','100','100','111'],'v':['000','000','101','101','010'],
       'H':['101','101','111','101','101'],'P':['110','101','110','100','100'],
       'E':['111','100','110','100','111'],'X':['101','101','010','101','101'],
@@ -129,19 +131,27 @@ DD.ui = {
   },
   offerLevelChoices() {
     const S = DD.state;
+    if (!(S.pendingLevelBonuses > 0) || S.mode === 'lost' || S.mode === 'won') return;
+    if (S.pauseReason === 'levelup' && S.pendingChoices && S.pendingChoices.length) {
+      this.renderMeterValue(document.getElementById('levelBonusCount'), `BONUS:${S.pendingLevelBonuses}`, '残り選択回数');
+      return;
+    }
     const choices = DD.utils.shuffle(Object.keys(DD.data.upgradeDefs).filter(k => S.player.upgrades[k] < DD.data.upgradeDefs[k].max)).slice(0, 3);
     if (!choices.length) {
+      S.pendingLevelBonuses = 0;
       this.closeLevelChoices();
       return;
     }
     S.pendingChoices = choices;
+    const choiceId = S.levelChoiceId = (S.levelChoiceId || 0) + 1;
     S.paused = true;
     S.pauseReason = 'levelup';
-    S.dom.overlay.innerHTML = `<div class="modal"><h2>レベルアップ</h2><p class="hint">1つ選んでね～</p><div class="choices">${choices.map(k => `
+    S.dom.overlay.innerHTML = `<div class="modal"><h2>レベルアップ</h2><div id="levelBonusCount" class="meter-number level-readout"></div><p class="hint">1つ選んでね～</p><div class="choices">${choices.map(k => `
       <div class="choice" data-upg="${k}"><div class="choiceTitle">${DD.data.upgradeDefs[k].name}</div>
       <div>${DD.data.upgradeDefs[k].getDesc(S.player.upgrades[k])}</div><small>最大Lv${DD.data.upgradeDefs[k].max}</small></div>`).join('')}</div></div>`;
     S.dom.overlay.classList.add('show');
-    S.dom.overlay.querySelectorAll('.choice').forEach(el => el.addEventListener('click', () => DD.systems.applyUpgrade(el.dataset.upg)));
+    this.renderMeterValue(document.getElementById('levelBonusCount'), `BONUS:${S.pendingLevelBonuses}`, '残り選択回数');
+    S.dom.overlay.querySelectorAll('.choice').forEach(el => el.addEventListener('click', () => DD.systems.applyUpgrade(el.dataset.upg, choiceId)));
   },
   closeLevelChoices() {
     const S = DD.state;
