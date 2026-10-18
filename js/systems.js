@@ -125,6 +125,22 @@ DD.systems = {
     }
     if (S.mode === 'boss' && DD.board.bossCleared(board)) this.winRun();
   },
+  chordTile(x, y) {
+    const S = DD.state;
+    if ((S.mode !== 'dungeon' && S.mode !== 'boss') || S.paused || S.itemMode) return;
+    if (!DD.utils.inBounds(x, y)) return;
+    const board = S.board;
+    const tile = board.grid[y][x];
+    if (!tile.active || !tile.isOpen || tile.number <= 0) return;
+    const neighbors = DD.utils.neighbors8(x, y).filter(([nx, ny]) => board.grid[ny][nx].active);
+    const flags = neighbors.filter(([nx, ny]) => board.grid[ny][nx].flagged).length;
+    if (flags !== tile.number) return;
+    for (const [nx, ny] of neighbors) {
+      if (S.board !== board || S.mode === 'won' || S.mode === 'lost') break;
+      const target = board.grid[ny][nx];
+      if (!target.isOpen && !target.flagged) this.openTile(nx, ny);
+    }
+  },
   toggleFlag(x, y) {
     const t = DD.state.board.grid[y][x];
     if (!t.active || t.isOpen) return;

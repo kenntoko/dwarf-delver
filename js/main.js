@@ -2,17 +2,21 @@ window.DD = window.DD || {};
 DD.main = {
   bindCanvasInput() {
     const canvas = DD.state.canvas;
+    let blockDoubleClick = false;
+    const cellAt = (e) => {
+      const rect = canvas.getBoundingClientRect();
+      return {
+        x: Math.floor(((e.clientX - rect.left) * canvas.width / rect.width - DD.config.boardRect.x) / DD.config.TILE),
+        y: Math.floor(((e.clientY - rect.top) * canvas.height / rect.height - DD.config.boardRect.y) / DD.config.TILE)
+      };
+    };
     canvas.addEventListener('contextmenu', (e) => e.preventDefault());
     canvas.addEventListener('mousedown', (e) => {
       const S = DD.state;
       if (S.mode === 'won' || S.mode === 'lost') return;
-      const rect = canvas.getBoundingClientRect();
-      const scaleX = canvas.width / rect.width;
-      const scaleY = canvas.height / rect.height;
-      const mx = (e.clientX - rect.left) * scaleX;
-      const my = (e.clientY - rect.top) * scaleY;
-      const gx = Math.floor((mx - DD.config.boardRect.x) / DD.config.TILE);
-      const gy = Math.floor((my - DD.config.boardRect.y) / DD.config.TILE);
+      if (e.button === 0 && e.detail === 1) blockDoubleClick = !!S.paused || !!S.itemMode;
+      if (e.button === 0 && e.detail > 1 && blockDoubleClick) return;
+      const { x: gx, y: gy } = cellAt(e);
       if (!DD.utils.inBounds(gx, gy)) return;
       const tile = S.board.grid[gy][gx];
       if (!tile.active) return;
@@ -30,6 +34,14 @@ DD.main = {
       }
       if (!DD.board.validDigTarget(S.board, gx, gy, S.mode)) return;
       DD.systems.openTile(gx, gy);
+      DD.ui.refreshHud();
+    });
+    canvas.addEventListener('dblclick', (e) => {
+      if (e.button !== 0 || blockDoubleClick) return;
+      const { x, y } = cellAt(e);
+      if (!DD.utils.inBounds(x, y)) return;
+      e.preventDefault();
+      DD.systems.chordTile(x, y);
       DD.ui.refreshHud();
     });
   },
