@@ -96,7 +96,7 @@ DD.render = {
 
       if (t.isEntrance && DD.state.mode === 'dungeon') {
         ctx.fillStyle = colors.entrance;
-        ctx.beginPath(); ctx.arc(px + 8, py + TILE/2, 6, 0, Math.PI * 2); ctx.fill();
+        ctx.beginPath(); ctx.arc(px + TILE/2, py + 8, 6, 0, Math.PI * 2); ctx.fill();
       }
       if (t.isExit && (DD.state.discoveredExit || t.isOpen)) {
         ctx.fillStyle = colors.exit;

@@ -44,20 +44,21 @@ DD.board = {
   generateDungeonFloor(floorNum) {
     const U = DD.utils;
     const { W, H } = DD.config;
-    const entryY = U.randInt(6, 9);
+    const entryX = Math.floor(W / 2);
+    const entryY = 0;
     const exitX = U.randInt(20, 29);
     const exitY = U.randInt(2, H - 3);
     const board = {
       kind: 'dungeon',
       grid: this.newGrid(),
-      entry: { x: 0, y: entryY },
+      entry: { x: entryX, y: entryY },
       exit: { x: exitX, y: exitY },
       floorNum,
       bossOverlayAlpha: 1,
     };
 
     const safe = new Set();
-    let x = 0, y = entryY;
+    let x = entryX, y = entryY;
     safe.add(U.key(x, y));
     while (x !== exitX || y !== exitY) {
       const options = [];
@@ -72,15 +73,15 @@ DD.board = {
       safe.add(U.key(x, y));
     }
 
-    const openSet = new Set([U.key(0, entryY), U.key(1, entryY)]);
-    safe.add(U.key(1, entryY)); // initial opened tiles must always be protected
-    let frontier = [[1, entryY], [0, entryY]];
+    const openSet = new Set([U.key(entryX, entryY), U.key(entryX, entryY + 1)]);
+    safe.add(U.key(entryX, entryY + 1)); // initial opened tiles must always be protected
+    let frontier = [[entryX, entryY + 1], [entryX, entryY]];
     while (openSet.size < 22) {
       const [cx, cy] = U.choice(frontier);
-      const candidates = U.shuffle(U.neighbors4(cx, cy)).filter(([nx, ny]) => nx < 8 && !openSet.has(U.key(nx, ny)));
+      const candidates = U.shuffle(U.neighbors4(cx, cy)).filter(([nx, ny]) => nx >= entryX - 4 && nx <= entryX + 3 && ny < 8 && !openSet.has(U.key(nx, ny)));
       if (!candidates.length) {
         frontier = frontier.filter(([fx, fy]) => !(fx === cx && fy === cy));
-        if (!frontier.length) frontier = [[1, entryY]];
+        if (!frontier.length) frontier = [[entryX, entryY + 1]];
         continue;
       }
       const [nx, ny] = candidates[0];
@@ -111,7 +112,7 @@ DD.board = {
       board.grid[my][mx].isDanger = true;
     }
 
-    board.grid[entryY][0].isEntrance = true;
+    board.grid[entryY][entryX].isEntrance = true;
     board.grid[exitY][exitX].isExit = true;
     board.grid[exitY][exitX].isDanger = false;
     this.recomputeNumbers(board);
