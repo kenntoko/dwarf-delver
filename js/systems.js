@@ -271,6 +271,85 @@ DD.systems = {
     }
     return best;
   },
+  slimePositionClear(x, y, radius) {
+    const { TILE, boardRect, W, H } = DD.config;
+    const grid = DD.state.board.grid;
+    const minX = Math.floor((x - radius - boardRect.x) / TILE);
+    const maxX = Math.floor((x + radius - boardRect.x) / TILE);
+    const minY = Math.floor((y - radius - boardRect.y) / TILE);
+    const maxY = Math.floor((y + radius - boardRect.y) / TILE);
+    for (let ty = minY; ty <= maxY; ty++) for (let tx = minX; tx <= maxX; tx++) {
+      if (tx >= 0 && tx < W && ty >= 0 && ty < H && grid[ty][tx].active && grid[ty][tx].isOpen) continue;
+      const left = boardRect.x + tx * TILE, top = boardRect.y + ty * TILE;
+      const dx = x - Math.max(left, Math.min(x, left + TILE));
+      const dy = y - Math.max(top, Math.min(y, top + TILE));
+      if (dx * dx + dy * dy < radius * radius - 0.001) return false;
+    }
+    return true;
+  },
+  slimeSegmentClear(fromX, fromY, toX, toY, radius) {
+    const distance = Math.hypot(toX - fromX, toY - fromY);
+    const steps = Math.max(1, Math.ceil(distance / 2));
+    for (let i = 0; i <= steps; i++) {
+      const t = i / steps;
+      if (!this.slimePositionClear(fromX + (toX - fromX) * t, fromY + (toY - fromY) * t, radius)) return false;
+    }
+    return true;
+  },
+  updateSlime(enemy, dt) {
+    const S = DD.state, def = DD.data.enemyDefs.slime;
+    const { TILE, boardRect } = DD.config;
+    const radius = def.size;
+    enemy.tileX = Math.floor((enemy.x - boardRect.x) / TILE);
+    enemy.tileY = Math.floor((enemy.y - boardRect.y) / TILE);
+    const goal = S.playerPos();
+    const direct = this.slimeSegmentClear(enemy.x, enemy.y, goal.x, goal.y, radius);
+    if (direct && Math.hypot(goal.x - enemy.x, goal.y - enemy.y) < 18) {
+      enemy.attackTimer -= dt;
+      if (enemy.attackTimer <= 0) {
+        this.applyDamage(def.damage);
+        enemy.attackAnimTimer = 0;
+        this.addLog(`${def.name}の攻撃で ${def.damage} ダメージ～`, 'danger');
+        enemy.attackTimer = def.attackCooldown;
+      }
+      return;
+    }
+    let target = direct ? goal : null;
+    if (!direct) {
+      if (enemy.repath <= 0 || !enemy.path || !enemy.path.length) {
+        enemy.path = this.computePath({ x: enemy.tileX, y: enemy.tileY }, S.board.entry);
+        enemy.repath = 0.6;
+      }
+      // Grid routing finds the corridor; visibility smoothing skips its cell centers.
+      // Steering toward the farthest visible point gives any-angle movement.
+      for (let i = enemy.path.length - 1; i >= 0; i--) {
+        const point = DD.utils.tileCenter(enemy.path[i].x, enemy.path[i].y);
+        if (this.slimeSegmentClear(enemy.x, enemy.y, point.x, point.y, radius)) {
+          target = point;
+          break;
+        }
+      }
+      if (!target) target = DD.utils.tileCenter(enemy.tileX, enemy.tileY);
+    }
+    const dx = target.x - enemy.x, dy = target.y - enemy.y;
+    const distance = Math.hypot(dx, dy);
+    if (distance < 0.01) return;
+    const travel = Math.min(distance, DD.config.baseEnemySpeed * def.speedMul * dt);
+    // Small swept steps keep large frame deltas from tunneling through rock.
+    const steps = Math.max(1, Math.ceil(travel / 2));
+    for (let i = 0; i < steps; i++) {
+      const nx = enemy.x + dx / distance * travel / steps;
+      const ny = enemy.y + dy / distance * travel / steps;
+      if (!this.slimePositionClear(nx, ny, radius)) {
+        enemy.repath = 0;
+        break;
+      }
+      enemy.x = nx;
+      enemy.y = ny;
+    }
+    enemy.tileX = Math.floor((enemy.x - boardRect.x) / TILE);
+    enemy.tileY = Math.floor((enemy.y - boardRect.y) / TILE);
+  },
   updateEnemy(enemy, dt) {
     const S = DD.state;
     const def = DD.data.enemyDefs[enemy.type];
@@ -320,6 +399,11 @@ DD.systems = {
       const len = Math.hypot(dx, dy) || 1;
       enemy.x += dx / len * speed * dt;
       enemy.y += dy / len * speed * dt;
+      return;
+    }
+
+    if (enemy.type === 'slime') {
+      this.updateSlime(enemy, dt);
       return;
     }
 
