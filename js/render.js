@@ -108,6 +108,25 @@ DD.render = {
         ctx.save();
         ctx.imageSmoothingEnabled = false;
         const size = Math.min(32, TILE - 2);
+        const sign = DD.assets.get('warning_sign');
+        if (sign && sign.complete && sign.naturalWidth > 0) {
+          // Cache a crisp pale silhouette for a one-pixel outline, including the wooden post.
+          if (!this.warningSignOutline || this.warningSignOutlineSource !== sign) {
+            const outline = document.createElement('canvas');
+            outline.width = sign.naturalWidth; outline.height = sign.naturalHeight;
+            const outlineCtx = outline.getContext('2d');
+            outlineCtx.drawImage(sign, 0, 0);
+            outlineCtx.globalCompositeOperation = 'source-in';
+            outlineCtx.fillStyle = '#f0d9a3';
+            outlineCtx.fillRect(0, 0, outline.width, outline.height);
+            this.warningSignOutline = outline;
+            this.warningSignOutlineSource = sign;
+          }
+          const x = px + (TILE-size)/2, y = py + (TILE-size)/2;
+          for (const [dx,dy] of [[-1,0],[1,0],[0,-1],[0,1]]) {
+            ctx.drawImage(this.warningSignOutline,x+dx,y+dy,size,size);
+          }
+        }
         this.drawImageOrFallback('warning_sign', () => {
           ctx.fillStyle = '#3a2114'; ctx.fillRect(px + TILE/2 - 2, py + 20, 4, 12);
           ctx.fillStyle = '#241b16'; ctx.fillRect(px + 3, py + 3, TILE - 6, 22);
