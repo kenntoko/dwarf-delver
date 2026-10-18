@@ -38,6 +38,19 @@ DD.render = {
         const mask = (isPassage(x,y-1)?1:0) | (isPassage(x+1,y)?2:0) |
           (isPassage(x,y+1)?4:0) | (isPassage(x-1,y)?8:0);
         ctx.drawImage(atlas,(mask%4)*32,Math.floor(mask/4)*32,32,32,px,py,TILE,TILE);
+        // A corner is floor when all three cells touching that corner are open.
+        // Keep the original rock corner beside an unopened diagonal cell.
+        const corners = [
+          [-1, -1, 9, 0, 0], [1, -1, 3, 24, 0],
+          [-1, 1, 12, 0, 24], [1, 1, 6, 24, 24]
+        ];
+        for (const [dx, dy, sides, cx, cy] of corners) {
+          if ((mask & sides) === sides && isPassage(x + dx, y + dy)) {
+            // Reuse the atlas's interior floor texture; no replacement artwork.
+            ctx.drawImage(atlas, 104, 104, 8, 8,
+              px + cx * TILE / 32, py + cy * TILE / 32, TILE / 4, TILE / 4);
+          }
+        }
       } else if (!t.isOpen && rock && rock.complete && rock.naturalWidth === 32) {
         ctx.drawImage(rock,px,py,TILE,TILE);
       } else {
