@@ -229,18 +229,7 @@ DD.render = {
     return { asset: 'hero_breath_sheet', columns: 3, frame: Math.floor(idle / 0.25) % 6 };
   },
   heroImpact(age) {
-    if (age >= 0.8) return { x: 0, y: 0, angle: 0, sx: 1, sy: 1, flash: false };
-    const keys = [
-      [0, 0, 0, 0, 1, 1], [0.07, 9, 4, 0.18, 1.12, 0.88],
-      [0.19, 16, 2, 0.32, 0.92, 1.08], [0.34, 13, 3, 0.25, 0.96, 1.04],
-      [0.52, 6, 1, 0.12, 1.02, 0.98], [0.8, 0, 0, 0, 1, 1]
-    ];
-    const i = keys.findIndex(k => k[0] > age);
-    const a = keys[Math.max(0, i - 1)], b = keys[Math.max(1, i)];
-    const t = Math.max(0, Math.min(1, (age - a[0]) / (b[0] - a[0])));
-    const mix = n => a[n] + (b[n] - a[n]) * t;
-    return { x: mix(1), y: mix(2), angle: mix(3), sx: mix(4), sy: mix(5),
-      flash: age < 0.075 || (age >= 0.20 && age < 0.275) };
+    return { flash: age < 0.075 || (age >= 0.20 && age < 0.275) };
   },
   drawHeroSweat(p) {
     const effect = DD.state.heroSweat;
@@ -270,9 +259,8 @@ DD.render = {
     if (sheet && sheet.complete && sheet.naturalWidth > 0) {
       const impact = this.heroImpact(DD.state.heroHurtAge ?? 999);
       ctx.save(); ctx.imageSmoothingEnabled = false;
-      // Anchor at the feet: recoil changes the drawing, never collision or attack positions.
-      ctx.translate(Math.round(p.x + impact.x), Math.round(p.y + 14 + impact.y));
-      ctx.rotate(impact.angle); ctx.scale(impact.sx, impact.sy);
+      // Keep the original pixel grid: no interpolated rotation, movement or scaling.
+      ctx.translate(Math.round(p.x), Math.round(p.y + 14));
       if (impact.flash) ctx.filter = 'brightness(5) saturate(0)';
       ctx.drawImage(sheet, (pose.frame % pose.columns) * 96, Math.floor(pose.frame / pose.columns) * 96, 96, 96,
         -48, -92, 96, 96);
