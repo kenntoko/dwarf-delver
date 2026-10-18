@@ -20,6 +20,52 @@ DD.render = {
     ctx.fillStyle = grd;
     ctx.fillRect(boardRect.x - 20, boardRect.y - 20, boardRect.w + 40, boardRect.h + 150);
   },
+  drawRockCell(rock, atlas, x, y, px, py, size) {
+    const { ctx, board } = DD.state;
+    const open = (nx, ny) => DD.utils.inBounds(nx, ny) &&
+      board.grid[ny][nx].active && board.grid[ny][nx].isOpen;
+    const exposed = [open(x, y - 1), open(x + 1, y), open(x, y + 1), open(x - 1, y)];
+    if (!exposed.some(Boolean)) {
+      ctx.drawImage(rock, px, py, size, size);
+      return;
+    }
+    ctx.save();
+    ctx.beginPath(); ctx.rect(px, py, size, size); ctx.clip();
+    if (atlas && atlas.complete && atlas.naturalWidth === 128) {
+      ctx.drawImage(atlas, 104, 104, 16, 16, px, py, size, size);
+    } else {
+      ctx.fillStyle = DD.config.colors.open;
+      ctx.fillRect(px, py, size, size);
+    }
+    // Stable pixel steps cut inward from each exposed edge, never into another cell.
+    ctx.beginPath();
+    for (let side = 0; side < 4; side++) {
+      const point = (along, depth) => {
+        const u = along * size / 32, v = depth * size / 32;
+        if (side === 0) return [px + u, py + v];
+        if (side === 1) return [px + size - v, py + u];
+        if (side === 2) return [px + size - u, py + size - v];
+        return [px + v, py + size - u];
+      };
+      const start = point(0, 0);
+      if (side === 0) ctx.moveTo(...start); else ctx.lineTo(...start);
+      for (let step = 0; step < 8; step++) {
+        const seed = ((x * 73856093) ^ (y * 19349663) ^ (side * 83492791) ^ (step * 2654435761)) >>> 0;
+        const depth = exposed[side] ? 1 + (seed % 5) : 0;
+        ctx.lineTo(...point(step * 4, depth));
+        ctx.lineTo(...point((step + 1) * 4, depth));
+      }
+      ctx.lineTo(...point(32, 0));
+    }
+    ctx.closePath();
+    ctx.save(); ctx.clip();
+    ctx.drawImage(rock, px, py, size, size);
+    ctx.restore();
+    ctx.strokeStyle = 'rgba(25, 15, 9, .8)';
+    ctx.lineWidth = 1;
+    ctx.stroke();
+    ctx.restore();
+  },
   drawBoard() {
     const ctx = DD.state.ctx;
     const board = DD.state.board;
@@ -36,14 +82,14 @@ DD.render = {
         // Floor fills the entire open cell. Rock edges belong only to closed cells.
         ctx.drawImage(atlas, 104, 104, 16, 16, px, py, TILE, TILE);
       } else if (!t.isOpen && rock && rock.complete && rock.naturalWidth === 32) {
-        ctx.drawImage(rock,px,py,TILE,TILE);
+        this.drawRockCell(rock, atlas, x, y, px, py, TILE);
       } else {
         ctx.fillStyle = t.isOpen ? colors.open : colors.closed;
         ctx.fillRect(px,py,TILE,TILE);
       }
       if (t.autoHint && !t.isOpen) { ctx.fillStyle='rgba(85,175,255,0.45)'; ctx.fillRect(px,py,TILE,TILE); }
       // Keep the full one-pixel grid stroke inside its own cell.
-      ctx.strokeStyle = t.isOpen ? 'rgba(20,10,5,.22)' : 'rgba(20,10,5,.65)';
+      ctx.strokeStyle = t.isOpen ? 'rgba(20,10,5,.22)' : 'rgba(20,10,5,.3)';
       ctx.lineWidth = 1;
       ctx.strokeRect(px + 0.5, py + 0.5, TILE - 1, TILE - 1);
       ctx.globalAlpha = 1;
