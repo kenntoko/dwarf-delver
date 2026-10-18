@@ -16,6 +16,9 @@ DD.systems = {
     S.floorTimer = 0;
     S.spawnTimer = 0;
     S.damageNumbers = [];
+    S.heroIdleTime = 0;
+    S.heroHurtAge = 999;
+    S.heroSweat = null;
     S.discoveredExit = false;
     S.readyToDescend = false;
     S.enemies = [];
@@ -78,9 +81,12 @@ DD.systems = {
     S.player.hp -= actual;
     if (actual > 0) {
       const pos = S.playerPos();
+      S.heroHurtAge = 0;
+      S.heroIdleTime = 0;
+      S.heroSweat = { age: 0 };
       S.damageNumbers = S.damageNumbers || [];
       const offset = (S.damageNumbers.length % 3 - 1) * 8;
-      S.damageNumbers.push({ text: '-' + String(Math.round(actual * 10) / 10), x: pos.x + offset, y: pos.y - 24, age: 0 });
+      S.damageNumbers.push({ text: '-' + String(Math.round(actual * 10) / 10), x: pos.x + offset, y: Math.max(34, pos.y - 65), age: 0 });
       DD.ui.shakeHpBar();
     }
     if (S.player.hp <= 0) {
@@ -762,7 +768,13 @@ DD.systems = {
   update(dt) {
     const S = DD.state;
     S.damageNumbers = (S.damageNumbers || []).filter(n => { n.age += dt; return n.age < 1; });
+    if (S.heroSweat) {
+      S.heroSweat.age += dt;
+      if (S.heroSweat.age >= 1) S.heroSweat = null;
+    }
+    S.heroHurtAge = Math.min(999, (S.heroHurtAge ?? 999) + dt);
     if (S.paused || S.mode === 'lost' || S.mode === 'won') return;
+    if (S.heroHurtAge >= 0.6) S.heroIdleTime = ((S.heroIdleTime || 0) + dt) % 10;
     S.floorTimer += dt;
     if (S.mode === 'boss') {
       S.bossAttackTimer -= dt;

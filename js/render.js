@@ -218,13 +218,52 @@ DD.render = {
     }
     ctx.restore();
   },
+  heroPose() {
+    const S = DD.state;
+    if ((S.heroHurtAge ?? 999) < 0.6)
+      return { asset: 'hero_hurt_sheet', columns: 3, frame: Math.min(5, Math.floor(S.heroHurtAge / 0.1)) };
+    const idle = S.heroIdleTime || 0;
+    // The yawn starts once per ten seconds of unpaused idle time.
+    if (idle >= 8.72)
+      return { asset: 'hero_yawn_sheet', columns: 4, frame: Math.min(7, Math.floor((idle - 8.72) / 0.16)) };
+    return { asset: 'hero_breath_sheet', columns: 3, frame: Math.floor(idle / 0.25) % 6 };
+  },
+  drawHeroSweat(p) {
+    const effect = DD.state.heroSweat;
+    if (!effect) return;
+    const ctx = DD.state.ctx, age = effect.age;
+    const scale = age < 0.14 ? 0.65 + age / 0.14 * 0.55 : 1.2 - Math.min(1, (age - 0.14) / 0.16) * 0.2;
+    ctx.save();
+    ctx.globalAlpha = Math.max(0, 1 - Math.max(0, age - 0.2) / 0.8);
+    ctx.translate(Math.round(p.x + 43), Math.round(Math.max(38, p.y - 56) - age * 22));
+    ctx.scale(scale, scale);
+    // Separate pixel speech balloon and blue sweat drop.
+    ctx.fillStyle = '#302d40';
+    ctx.fillRect(-10,-12,20,24); ctx.fillRect(-14,-8,28,16); ctx.fillRect(-10,10,7,5);
+    ctx.fillStyle = '#fffbea';
+    ctx.fillRect(-8,-10,16,20); ctx.fillRect(-12,-6,24,12); ctx.fillRect(-8,8,4,4);
+    ctx.fillStyle = '#227fae';
+    ctx.fillRect(-1,-8,2,3); ctx.fillRect(-3,-5,6,4); ctx.fillRect(-5,-1,10,6); ctx.fillRect(-3,5,6,2);
+    ctx.fillStyle = '#75e4ff'; ctx.fillRect(-1,-4,2,3); ctx.fillRect(-3,0,5,4);
+    ctx.fillStyle = '#ffffff'; ctx.fillRect(-2,0,2,2);
+    ctx.restore();
+  },
   drawPlayerAndDwarves() {
     const ctx = DD.state.ctx;
     const p = DD.state.playerPos();
-    this.drawImageOrFallback('player', () => {
-      ctx.fillStyle = '#e6d5b8'; ctx.beginPath(); ctx.arc(p.x, p.y, 13, 0, Math.PI * 2); ctx.fill();
-      ctx.fillStyle = '#402d22'; ctx.fillRect(p.x - 8, p.y + 10, 16, 5);
-    }, p.x - 16, p.y - 16, 32, 32);
+    const pose = this.heroPose();
+    const sheet = DD.assets.get(pose.asset);
+    if (sheet && sheet.complete && sheet.naturalWidth > 0) {
+      ctx.save(); ctx.imageSmoothingEnabled = false;
+      ctx.drawImage(sheet, (pose.frame % pose.columns) * 96, Math.floor(pose.frame / pose.columns) * 96, 96, 96,
+        Math.round(p.x - 48), Math.round(p.y - 78), 96, 96);
+      ctx.restore();
+    } else {
+      this.drawImageOrFallback('player', () => {
+        ctx.fillStyle = '#e6d5b8'; ctx.fillRect(p.x - 12, p.y - 16, 24, 32);
+      }, p.x - 16, p.y - 16, 32, 32);
+    }
+    this.drawHeroSweat(p);
 
     const count = DD.state.player.upgrades.summon;
     for (let i = 0; i < count; i++) {
