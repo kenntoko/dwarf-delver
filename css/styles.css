@@ -1,0 +1,150 @@
+:root {
+  --bg: #15120f;
+  --panel: #241d18;
+  --panel2: #31271f;
+  --text: #f2e7cf;
+  --accent: #ffcc66;
+  --danger: #e36d60;
+  --safe: #4fb0c6;
+  --good: #89c26b;
+  --muted: #bcae99;
+}
+* { box-sizing: border-box; }
+body {
+  margin: 0;
+  background: var(--bg);
+  color: var(--text);
+  font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+}
+#app {
+  display: grid;
+  grid-template-columns: 1fr 340px;
+  gap: 12px;
+  padding: 12px;
+  max-width: 1440px;
+  margin: 0 auto;
+}
+#leftCol { min-width: 0; }
+#boardWrap {
+  background: #0f0c0a;
+  border: 2px solid #4a3828;
+  border-radius: 8px;
+  position: relative;
+  overflow: hidden;
+}
+canvas {
+  display: block;
+  width: 100%;
+  height: auto;
+  background: linear-gradient(#0e1316, #0a0d10);
+  image-rendering: pixelated;
+}
+#overlay, #itemOverlay, #messageBanner {
+  position: absolute;
+  inset: 0;
+  display: none;
+  align-items: center;
+  justify-content: center;
+  padding: 20px;
+  background: rgba(5,5,5,0.72);
+  z-index: 20;
+}
+#overlay.show, #itemOverlay.show, #messageBanner.show { display: flex; }
+.modal {
+  width: min(720px, 95%);
+  background: var(--panel);
+  border: 2px solid #6b523c;
+  border-radius: 10px;
+  box-shadow: 0 10px 30px rgba(0,0,0,0.5);
+  padding: 16px;
+}
+.modal h2, .panel h2, .panel h3 { margin: 0 0 10px; }
+.choices { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; }
+.choice {
+  background: var(--panel2);
+  border: 1px solid #70583f;
+  border-radius: 8px;
+  padding: 12px;
+  cursor: pointer;
+  min-height: 140px;
+  transition: transform .08s ease, border-color .08s ease;
+}
+.choice:hover { transform: translateY(-2px); border-color: var(--accent); }
+.choiceTitle { font-weight: 700; margin-bottom: 6px; color: var(--accent); }
+.choice small { color: var(--muted); }
+.panel {
+  background: var(--panel);
+  border: 2px solid #4a3828;
+  border-radius: 8px;
+  padding: 12px;
+  margin-bottom: 12px;
+}
+.statRow {
+  display: grid;
+  grid-template-columns: auto 1fr auto;
+  gap: 8px;
+  align-items: center;
+  margin-bottom: 8px;
+}
+.bar {
+  height: 12px;
+  border-radius: 999px;
+  background: #120f0d;
+  overflow: hidden;
+  border: 1px solid #5b4634;
+}
+.bar > div { height: 100%; }
+.hpFill { background: linear-gradient(90deg, #cd5247, #ef7f68); }
+.xpFill { background: linear-gradient(90deg, #5ea7e9, #7dd0ff); }
+.miniGrid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px; }
+.upgradeItem, .invItem {
+  background: var(--panel2);
+  border: 1px solid #5b4634;
+  border-radius: 6px;
+  padding: 8px;
+  font-size: 13px;
+}
+.invItem button, .panel button, .messageButton {
+  width: 100%;
+  margin-top: 8px;
+  background: #5e492f;
+  border: 1px solid #8b6b45;
+  color: #fff7e7;
+  border-radius: 6px;
+  padding: 8px;
+  cursor: pointer;
+  font-weight: 600;
+}
+.invItem button:disabled, .panel button:disabled { opacity: .5; cursor: default; }
+#log {
+  max-height: 280px;
+  overflow: auto;
+  font-size: 13px;
+  line-height: 1.4;
+}
+#log p {
+  margin: 0 0 6px;
+  padding-bottom: 6px;
+  border-bottom: 1px solid rgba(255,255,255,.06);
+}
+.hint { color: var(--muted); font-size: 12px; }
+.good { color: var(--good); }
+.danger { color: var(--danger); }
+.topline { display:flex; justify-content:space-between; gap:8px; align-items:center; margin-bottom:8px; }
+.pill {
+  padding: 3px 8px;
+  background: #4f3f2e;
+  border-radius: 999px;
+  font-size: 12px;
+}
+#messageBanner .modal { text-align: center; }
+@media (max-width: 1100px) {
+  #app { grid-template-columns: 1fr; }
+}
+
+/* Targeting UI must not intercept canvas clicks. */
+#itemOverlay { inset: 0; align-items: flex-start; justify-content: center; padding: 6px; background: transparent; pointer-events:none; }
+#itemOverlay .modal { width: min(560px,95%); padding: 8px 12px; pointer-events:auto; background:rgba(36,29,24,.94); }
+#itemOverlay .modal h2 { font-size:14px; margin:0; }
+#itemOverlay .modal p { font-size:12px; margin:3px 0; }
+#itemOverlay .modal button { width:auto; margin:2px 0; padding:4px 12px; }

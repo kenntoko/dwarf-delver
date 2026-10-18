@@ -1,0 +1,191 @@
+window.DD = window.DD || {};
+DD.render = {
+  drawImageOrFallback(name, drawFallback, x, y, w, h) {
+    const ctx = DD.state.ctx;
+    const img = DD.assets.get(name);
+    if (img && img.complete && img.naturalWidth > 0) {
+      ctx.drawImage(img, x, y, w, h);
+    } else {
+      drawFallback();
+    }
+  },
+  drawBackground() {
+    const ctx = DD.state.ctx;
+    const { CANVAS_W, CANVAS_H, boardRect } = DD.config;
+    ctx.fillStyle = '#101316';
+    ctx.fillRect(0, 0, CANVAS_W, CANVAS_H);
+    const grd = ctx.createLinearGradient(0, boardRect.y, 0, boardRect.y + boardRect.h + 120);
+    grd.addColorStop(0, '#1b2328');
+    grd.addColorStop(1, '#0f1214');
+    ctx.fillStyle = grd;
+    ctx.fillRect(boardRect.x - 20, boardRect.y - 20, boardRect.w + 40, boardRect.h + 150);
+  },
+  drawBoard() {
+    const ctx = DD.state.ctx;
+    const board = DD.state.board;
+    const { TILE, boardRect, colors, nums } = DD.config;
+    if (!board) return;
+    for (let y = 0; y < DD.config.H; y++) for (let x = 0; x < DD.config.W; x++) {
+      const t = board.grid[y][x];
+      if (!t.active) continue;
+      const px = boardRect.x + x * TILE, py = boardRect.y + y * TILE;
+      ctx.globalAlpha = DD.state.mode === 'boss' ? board.bossOverlayAlpha : 1;
+      const atlas = DD.assets.get('cave_autotile_32');
+      const rock = DD.assets.get('cave_wall_32');
+      const isPassage = (nx, ny) => DD.utils.inBounds(nx,ny) && board.grid[ny][nx].active && board.grid[ny][nx].isOpen;
+      if (t.isOpen && atlas && atlas.complete && atlas.naturalWidth === 128) {
+        // Four-way cardinal neighborhood bitmap: N=1, E=2, S=4, W=8.
+        const mask = (isPassage(x,y-1)?1:0) | (isPassage(x+1,y)?2:0) |
+          (isPassage(x,y+1)?4:0) | (isPassage(x-1,y)?8:0);
+        ctx.drawImage(atlas,(mask%4)*32,Math.floor(mask/4)*32,32,32,px,py,TILE,TILE);
+      } else if (!t.isOpen && rock && rock.complete && rock.naturalWidth === 32) {
+        ctx.drawImage(rock,px,py,TILE,TILE);
+      } else {
+        ctx.fillStyle = t.isOpen ? colors.open : colors.closed;
+        ctx.fillRect(px,py,TILE,TILE);
+      }
+      if (t.autoHint && !t.isOpen) { ctx.fillStyle='rgba(85,175,255,0.45)'; ctx.fillRect(px,py,TILE,TILE); }
+      ctx.strokeStyle = 'rgba(20,10,5,.22)';
+      ctx.strokeRect(px,py,TILE,TILE);
+      ctx.globalAlpha = 1;
+
+      if (t.isEntrance && DD.state.mode === 'dungeon') {
+        ctx.fillStyle = colors.entrance;
+        ctx.beginPath(); ctx.arc(px + 8, py + TILE/2, 6, 0, Math.PI * 2); ctx.fill();
+      }
+      if (t.isExit && (DD.state.discoveredExit || t.isOpen)) {
+        ctx.fillStyle = colors.exit;
+        ctx.fillRect(px + TILE * 0.25, py + 6, TILE * 0.5, TILE - 12);
+      }
+      if (!t.isOpen && t.flagged) {
+        this.drawImageOrFallback('flag', () => {
+          ctx.fillStyle = colors.flag;
+          ctx.fillRect(px + 17, py + 8, 4, 18);
+          ctx.beginPath(); ctx.moveTo(px + 20, py + 10); ctx.lineTo(px + 30, py + 16); ctx.lineTo(px + 20, py + 22); ctx.closePath(); ctx.fill();
+        }, px + 8, py + 6, 20, 24);
+      }
+      if (!t.isOpen && t.reinforced) {
+        ctx.strokeStyle = colors.reinforce; ctx.lineWidth = 3; ctx.strokeRect(px + 4, py + 4, TILE - 8, TILE - 8); ctx.lineWidth = 1;
+      }
+      if (!t.isOpen && t.preview !== null) {
+        ctx.fillStyle = colors.preview;
+        ctx.font = 'bold 16px sans-serif';
+        ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+        ctx.fillText(t.preview, px + TILE / 2, py + TILE / 2);
+      }
+      if (!t.isOpen && t.surveyCount !== null) {
+        ctx.fillStyle = colors.survey;
+        ctx.font = 'bold 14px sans-serif'; ctx.textAlign = 'left';
+        ctx.fillText(`地${t.surveyCount}`, px + 2, py + TILE - 4);
+      }
+      if (t.isOpen) {
+        if (t.number > 0) {
+          ctx.fillStyle = nums[t.number] || '#fff';
+          ctx.font = 'bold 22px sans-serif'; ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+          ctx.fillText(String(t.number), px + TILE / 2, py + TILE / 2 + 1);
+        }
+        if (t.chest) this.drawImageOrFallback('chest', () => {
+          ctx.fillStyle = colors.chest; ctx.fillRect(px + 9, py + 12, 18, 12); ctx.strokeStyle = '#6f5b15'; ctx.strokeRect(px + 9, py + 12, 18, 12);
+        }, px + 8, py + 10, 20, 16);
+      }
+    }
+  },
+  drawPlayerAndDwarves() {
+    const ctx = DD.state.ctx;
+    const p = DD.state.playerPos();
+    this.drawImageOrFallback('player', () => {
+      ctx.fillStyle = '#e6d5b8'; ctx.beginPath(); ctx.arc(p.x, p.y, 13, 0, Math.PI * 2); ctx.fill();
+      ctx.fillStyle = '#402d22'; ctx.fillRect(p.x - 8, p.y + 10, 16, 5);
+    }, p.x - 16, p.y - 16, 32, 32);
+
+    const count = DD.state.player.upgrades.summon;
+    for (let i = 0; i < count; i++) {
+      const ang = (Math.PI * 2 * i) / count + performance.now() * 0.0005;
+      const dx = Math.cos(ang) * 28, dy = Math.sin(ang) * 28;
+      this.drawImageOrFallback('dwarf', () => {
+        ctx.fillStyle = '#8ecae6'; ctx.beginPath(); ctx.arc(p.x + dx, p.y + dy, 7, 0, Math.PI * 2); ctx.fill();
+      }, p.x + dx - 8, p.y + dy - 8, 16, 16);
+    }
+  },
+  drawEnemies() {
+    const ctx = DD.state.ctx;
+    DD.state.enemies.forEach(e => {
+      const def = DD.data.enemyDefs[e.type];
+      if (e.type === 'slime') {
+        const sheet = DD.assets.get('slime_sheet');
+        if (sheet && sheet.complete && sheet.naturalWidth >= 160 && sheet.naturalHeight >= 64) {
+          let sx = 0, sy = 0;
+          if (e.attackAnimTimer < 0.48) {
+            const attackFrame = Math.min(3, Math.floor(e.attackAnimTimer / 0.12));
+            sx = attackFrame * 32;
+            sy = 32;
+          } else {
+            const idleFrame = Math.floor(performance.now() / 140) % 5;
+            sx = idleFrame * 32;
+            sy = 0;
+          }
+          ctx.drawImage(sheet, sx, sy, 32, 32, e.x - 16, e.y - 16, 32, 32);
+        } else {
+          this.drawImageOrFallback(def.asset, () => {
+            ctx.fillStyle = '#58d676';
+            ctx.beginPath(); ctx.arc(e.x, e.y, def.size, 0, Math.PI * 2); ctx.fill();
+          }, e.x - 16, e.y - 16, 32, 32);
+        }
+      } else {
+        this.drawImageOrFallback(def.asset, () => {
+          ctx.fillStyle = e.type === 'bat' ? '#a986ff' : '#d2be58';
+          if (e.type === 'bat') {
+            ctx.beginPath(); ctx.moveTo(e.x - 10, e.y + 2); ctx.quadraticCurveTo(e.x - 2, e.y - 10, e.x, e.y); ctx.quadraticCurveTo(e.x + 2, e.y - 10, e.x + 10, e.y + 2); ctx.closePath(); ctx.fill();
+          } else {
+            ctx.fillRect(e.x - 10, e.y - 10, 20, 20);
+          }
+        }, e.x - 16, e.y - 16, 32, 32);
+      }
+      ctx.fillStyle = 'rgba(0,0,0,.5)'; ctx.fillRect(e.x - 12, e.y - 18, 24, 4);
+      ctx.fillStyle = '#ff7d67'; ctx.fillRect(e.x - 12, e.y - 18, 24 * Math.max(0, e.hp / DD.data.enemyDefs[e.type].hp), 4);
+    });
+  },
+  drawGoblinSignMeters() {
+    const ctx = DD.state.ctx;
+    const duration = DD.config.goblinSignBreakSeconds;
+    const sheet = DD.assets.get('goblin_break_meter');
+    for (const enemy of DD.state.enemies) {
+      if (enemy.type !== 'goblin' || !enemy.breakingSign || !enemy.targetFlag) continue;
+      const step = Math.min(4, Math.floor(enemy.breakTimer / (duration / 4)));
+      const dx = Math.round(enemy.x - 4);
+      const dy = Math.round(enemy.y - 29);
+      if (sheet && sheet.complete && sheet.naturalWidth >= 40 && sheet.naturalHeight >= 8) {
+        ctx.drawImage(sheet, step * 8, 0, 8, 8, dx, dy, 8, 8);
+      } else {
+        ctx.fillStyle = 'rgba(15, 11, 9, .9)';
+        ctx.beginPath(); ctx.arc(dx + 4, dy + 4, 4, 0, Math.PI * 2); ctx.fill();
+      }
+    }
+  },
+  drawProjectiles() {
+    const ctx = DD.state.ctx;
+    DD.state.projectiles.forEach(p => {
+      ctx.fillStyle = '#d4f0ff'; ctx.beginPath(); ctx.arc(p.x, p.y, 4, 0, Math.PI * 2); ctx.fill();
+    });
+  },
+  drawBossHud() {
+    if (DD.state.mode !== 'boss') return;
+    const ctx = DD.state.ctx;
+    const { boardRect } = DD.config;
+    ctx.fillStyle = 'rgba(0,0,0,.55)';
+    ctx.fillRect(boardRect.x, boardRect.y + boardRect.h + 18, 420, 48);
+    ctx.fillStyle = '#f2e7cf'; ctx.font = '18px sans-serif'; ctx.textAlign = 'left';
+    ctx.fillText(`ゴーレム攻撃まで: ${Math.ceil(DD.state.bossAttackTimer)}s`, boardRect.x + 10, boardRect.y + boardRect.h + 38);
+    ctx.fillText(`数字ポイント: ${DD.state.bossWindowScore}`, boardRect.x + 210, boardRect.y + boardRect.h + 38);
+  },
+  draw() {
+    this.drawBackground();
+    if (DD.state.mode === 'boss') this.drawEnemies();
+    this.drawBoard();
+    if (DD.state.mode !== 'boss') this.drawEnemies();
+    this.drawGoblinSignMeters();
+    this.drawProjectiles();
+    this.drawPlayerAndDwarves();
+    this.drawBossHud();
+  }
+};

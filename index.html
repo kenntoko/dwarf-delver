@@ -1,0 +1,78 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Dwarf Delver Pre-release</title>
+  <link rel="stylesheet" href="./css/styles.css" />
+</head>
+<body>
+  <div id="app">
+    <div id="leftCol">
+      <div class="panel">
+        <div class="topline">
+          <div>
+            <strong>Dwarf Delver Pre-release</strong>
+            <div class="hint">左クリック: 採掘 / 右クリック: 危険看板 / Nキー: 次階層へ / Esc: アイテム解除</div>
+          </div>
+          <div id="phasePill" class="pill">B1F</div>
+        </div>
+        <div id="statusText" class="hint">入口から洞窟を掘り進めて出口を探そう～</div>
+      </div>
+      <div id="boardWrap">
+        <canvas id="gameCanvas" width="1200" height="800"></canvas>
+        <div id="overlay"></div>
+        <div id="itemOverlay"></div>
+        <div id="messageBanner"></div>
+      </div>
+    </div>
+
+    <div id="rightCol">
+      <div class="panel">
+        <h2>主人公</h2>
+        <div class="statRow"><span>HP</span><div class="bar"><div id="hpBar" class="hpFill" style="width:100%"></div></div><span id="hpText">100 / 100</span></div>
+        <div class="statRow"><span>XP</span><div class="bar"><div id="xpBar" class="xpFill" style="width:0%"></div></div><span id="xpText">0 / 100</span></div>
+        <div class="miniGrid">
+          <div class="upgradeItem">Lv <strong id="levelText">1</strong></div>
+          <div class="upgradeItem">防御 <strong id="defText">0%</strong></div>
+          <div class="upgradeItem">精霊 <strong id="dwarfText">1</strong></div>
+          <div class="upgradeItem">出現間隔 <strong id="spawnText">9.00s</strong></div>
+        </div>
+        <button id="descendBtn" disabled>出口が見つかったら次の階層へ</button>
+      </div>
+
+      <div class="panel">
+        <h2>能力強化</h2>
+        <div id="upgradesBox" class="miniGrid"></div>
+      </div>
+
+      <div class="panel">
+        <h2>宝箱アイテム</h2>
+        <div id="inventoryBox" class="miniGrid"></div>
+        <div class="hint" style="margin-top:8px">消耗品の対象指定中は時間停止～</div>
+      </div>
+
+      <div class="panel">
+        <h2>フロア情報</h2>
+        <div id="floorInfo"></div>
+      </div>
+
+      <div class="panel">
+        <h2>ログ</h2>
+        <div id="log"></div>
+      </div>
+    </div>
+  </div>
+
+  <script src="./js/config.js"></script>
+  <script src="./js/utils.js"></script>
+  <script src="./js/data.js"></script>
+  <script src="./js/assets.js"></script>
+  <script src="./js/state.js"></script>
+  <script src="./js/board.js"></script>
+  <script src="./js/systems.js"></script>
+  <script src="./js/ui.js"></script>
+  <script src="./js/render.js"></script>
+  <script src="./js/main.js"></script>
+</body>
+</html>
