@@ -4,11 +4,15 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Dwarf Delver Pre-release</title>
-  <link rel="stylesheet" href="./css/styles.css?v=exit-choice-1" />
+  <link rel="stylesheet" href="./css/styles.css?v=combat-clarity-1" />
 </head>
 <body>
   <div id="app">
     <div id="leftCol">
+      <div class="panel top-vitals" aria-label="主人公のHPと経験値">
+        <div class="pixel-meter" id="hpMeter"><div class="meter-label"><strong>HP</strong><span id="hpText">100 / 100</span></div><div class="meter-track hp-track"><div id="hpBar" class="meter-art hpFill"></div></div></div>
+        <div class="pixel-meter"><div class="meter-label"><strong>EXP</strong><span id="xpText">0 / 100</span></div><div class="meter-track xp-track"><div id="xpBar" class="meter-art xpFill"></div></div></div>
+      </div>
       <div class="panel">
         <div class="topline">
           <div>
@@ -31,8 +35,6 @@
     <div id="rightCol">
       <div class="panel">
         <h2>主人公</h2>
-        <div class="statRow"><span>HP</span><div class="bar"><div id="hpBar" class="hpFill" style="width:100%"></div></div><span id="hpText">100 / 100</span></div>
-        <div class="statRow"><span>XP</span><div class="bar"><div id="xpBar" class="xpFill" style="width:0%"></div></div><span id="xpText">0 / 100</span></div>
         <div class="miniGrid">
           <div class="upgradeItem">Lv <strong id="levelText">1</strong></div>
           <div class="upgradeItem">防御 <strong id="defText">0%</strong></div>
@@ -71,9 +73,9 @@
   <script src="./js/assets.js?v=exit-ladder-1"></script>
   <script src="./js/state.js"></script>
   <script src="./js/board.js?v=exit-choice-1"></script>
-  <script src="./js/systems.js?v=slime-resume-1"></script>
-  <script src="./js/ui.js?v=slime-resume-1"></script>
-  <script src="./js/render.js?v=carry-entry-1"></script>
+  <script src="./js/systems.js?v=combat-clarity-1"></script>
+  <script src="./js/ui.js?v=combat-clarity-1"></script>
+  <script src="./js/render.js?v=combat-clarity-1"></script>
   <script src="./js/main.js?v=chord-1"></script>
 </body>
 </html>

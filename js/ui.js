@@ -7,6 +7,7 @@ DD.ui = {
       overlay: document.getElementById('overlay'),
       itemOverlay: document.getElementById('itemOverlay'),
       messageBanner: document.getElementById('messageBanner'),
+      hpMeter: document.getElementById('hpMeter'),
       hpBar: document.getElementById('hpBar'),
       hpText: document.getElementById('hpText'),
       xpBar: document.getElementById('xpBar'),
@@ -41,14 +42,21 @@ DD.ui = {
       if (e.key === 'Escape' && DD.state.pauseReason === 'item') this.clearItemMode();
     });
   },
+  shakeHpBar() {
+    const meter = DD.state.dom && DD.state.dom.hpMeter;
+    if (!meter) return;
+    meter.classList.remove('hp-hit');
+    void meter.offsetWidth;
+    meter.classList.add('hp-hit');
+  },
   renderLog() {
     DD.state.dom.logBox.innerHTML = DD.state.log.map(r => `<p class="${r.cls}">${r.text}</p>`).join('');
   },
   refreshHud() {
     const S = DD.state, D = S.dom;
-    D.hpBar.style.width = `${(S.player.hp / S.player.maxHp) * 100}%`;
+    D.hpBar.style.clipPath = `inset(0 ${100 - DD.utils.clamp(S.player.hp / S.player.maxHp * 100, 0, 100)}% 0 0)`;
     D.hpText.textContent = `${Math.ceil(S.player.hp)} / ${S.player.maxHp}`;
-    D.xpBar.style.width = `${(S.player.xp / S.player.nextXp) * 100}%`;
+    D.xpBar.style.clipPath = `inset(0 ${100 - DD.utils.clamp(S.player.xp / S.player.nextXp * 100, 0, 100)}% 0 0)`;
     D.xpText.textContent = `${S.player.xp} / ${S.player.nextXp}`;
     D.levelText.textContent = S.player.level;
     D.defText.textContent = `${S.player.upgrades.defense * 8}%`;

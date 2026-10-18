@@ -15,6 +15,7 @@ DD.systems = {
     S.floor = floor;
     S.floorTimer = 0;
     S.spawnTimer = 0;
+    S.damageNumbers = [];
     S.discoveredExit = false;
     S.readyToDescend = false;
     S.enemies = [];
@@ -72,7 +73,15 @@ DD.systems = {
   applyDamage(raw) {
     const S = DD.state;
     const reduced = raw * (1 - S.player.upgrades.defense * 0.08);
-    S.player.hp -= reduced;
+    const actual = Math.min(S.player.hp, Math.max(0, reduced));
+    S.player.hp -= actual;
+    if (actual > 0) {
+      const pos = S.playerPos();
+      S.damageNumbers = S.damageNumbers || [];
+      const offset = (S.damageNumbers.length % 3 - 1) * 8;
+      S.damageNumbers.push({ text: '-' + String(Math.round(actual * 10) / 10), x: pos.x + offset, y: pos.y - 24, age: 0 });
+      DD.ui.shakeHpBar();
+    }
     if (S.player.hp <= 0) {
       S.player.hp = 0;
       this.loseRun('主人公のHPが尽きた～');
@@ -296,18 +305,64 @@ DD.systems = {
     }
     return true;
   },
+  slimeApproachPoint(enemy, hero) {
+    const S = DD.state, radius = DD.data.enemyDefs.slime.size;
+    if (enemy.meleeSpot && enemy.meleeBoard === S.board &&
+        this.slimePositionClear(enemy.meleeSpot.x, enemy.meleeSpot.y, radius)) return enemy.meleeSpot;
+    let best = null, score = Infinity;
+    // Prefer separate contact positions; nearby positions are still allowed in tight passages.
+    for (const ring of [32, 46]) for (let i = 0; i < 16; i++) {
+      const angle = Math.PI * 2 * i / 16;
+      const p = { x: hero.x + Math.cos(angle) * ring, y: hero.y + Math.sin(angle) * ring };
+      if (S.mode !== 'boss' && !this.slimeSegmentClear(hero.x, hero.y, p.x, p.y, radius)) continue;
+      let cost = Math.hypot(p.x - enemy.x, p.y - enemy.y) + (ring - 32) * 2;
+      for (const other of S.enemies || []) {
+        if (other === enemy || other.type !== 'slime' || other.alive === false) continue;
+        const spot = other.meleeSpot || other;
+        const d = Math.hypot(spot.x - p.x, spot.y - p.y);
+        cost += Math.max(0, 25 - d) * 80;
+      }
+      if (cost < score) { best = p; score = cost; }
+    }
+    enemy.meleeSpot = best;
+    enemy.meleeBoard = S.board;
+    return best || hero;
+  },
+  separateSlime(enemy, dt) {
+    let dx = 0, dy = 0;
+    for (const other of DD.state.enemies || []) {
+      if (other === enemy || other.type !== 'slime' || other.alive === false) continue;
+      let x = enemy.x - other.x, y = enemy.y - other.y;
+      const d = Math.hypot(x, y);
+      if (d >= 24) continue;
+      if (d < 0.01) {
+        const index = DD.state.enemies.indexOf(enemy);
+        x = Math.cos(index * 2.4); y = Math.sin(index * 2.4);
+      } else { x /= d; y /= d; }
+      dx += x * (24 - d); dy += y * (24 - d);
+    }
+    const length = Math.hypot(dx, dy);
+    if (!length) return;
+    const step = Math.min(length * dt * 4, DD.config.baseEnemySpeed * dt * 0.5);
+    const x = enemy.x + dx / length * step, y = enemy.y + dy / length * step;
+    if (DD.state.mode === 'boss' || this.slimePositionClear(x, y, DD.data.enemyDefs.slime.size)) {
+      enemy.x = x; enemy.y = y;
+    }
+  },
   updateSlime(enemy, dt) {
     const S = DD.state, def = DD.data.enemyDefs.slime;
     const { TILE, boardRect } = DD.config;
     const radius = def.size;
     enemy.tileX = Math.floor((enemy.x - boardRect.x) / TILE);
     enemy.tileY = Math.floor((enemy.y - boardRect.y) / TILE);
-    const goal = S.playerPos();
+    const hero = S.playerPos();
+    const goal = this.slimeApproachPoint(enemy, hero);
+    this.separateSlime(enemy, dt);
     const direct = this.slimeSegmentClear(enemy.x, enemy.y, goal.x, goal.y, radius);
-    if (direct && Math.hypot(goal.x - enemy.x, goal.y - enemy.y) < 18) {
+    if (direct && Math.hypot(goal.x - enemy.x, goal.y - enemy.y) < (enemy.meleeSpot ? 4 : 18)) {
       enemy.attackTimer -= dt;
       if (enemy.attackTimer <= 0) {
-        this.applyDamage(def.damage);
+        enemy.pendingStrike = 0.2;
         enemy.attackAnimTimer = 0;
         this.addLog(`${def.name}の攻撃で ${def.damage} ダメージ～`, 'danger');
         enemy.attackTimer = def.attackCooldown;
@@ -362,9 +417,18 @@ DD.systems = {
     const def = DD.data.enemyDefs[enemy.type];
     enemy.repath -= dt;
     const playerPos = S.playerPos();
+    if (enemy.type === 'slime' && enemy.pendingStrike > 0) {
+      enemy.pendingStrike -= dt;
+      if (enemy.pendingStrike <= 0 && enemy.alive !== false &&
+          Math.hypot(enemy.x - playerPos.x, enemy.y - playerPos.y) < 66 &&
+          (S.mode === 'boss' || this.slimeSegmentClear(enemy.x, enemy.y, playerPos.x, playerPos.y, def.size))) {
+        this.applyDamage(def.damage);
+      }
+    }
 
     if (S.mode === 'boss') {
-      let targetPos = playerPos;
+      let targetPos = enemy.type === 'slime' ? this.slimeApproachPoint(enemy, playerPos) : playerPos;
+      if (enemy.type === 'slime') this.separateSlime(enemy, dt);
       if (enemy.type === 'goblin') {
         const dummy = { x: Math.floor((enemy.x - DD.config.boardRect.x) / DD.config.TILE), y: Math.floor((enemy.y - DD.config.boardRect.y) / DD.config.TILE) };
         const flagGoal = this.findNearestFlagCell(dummy);
@@ -391,10 +455,11 @@ DD.systems = {
       }
       enemy.breakTimer = 0;
       enemy.breakingSign = false;
-      if (!enemy.targetFlag && d < 34) {
+      if (!enemy.targetFlag && d < (enemy.type === 'slime' ? 4 : 34)) {
         enemy.attackTimer -= dt;
         if (enemy.attackTimer <= 0) {
-          this.applyDamage(def.damage);
+          if (enemy.type === 'slime') enemy.pendingStrike = 0.2;
+          else this.applyDamage(def.damage);
           enemy.attackAnimTimer = 0;
           this.addLog(`${def.name}の攻撃で ${def.damage} ダメージ～`, 'danger');
           enemy.attackTimer = def.attackCooldown;
@@ -612,6 +677,7 @@ DD.systems = {
   },
   update(dt) {
     const S = DD.state;
+    S.damageNumbers = (S.damageNumbers || []).filter(n => { n.age += dt; return n.age < 1; });
     if (S.paused || S.mode === 'lost' || S.mode === 'won') return;
     S.floorTimer += dt;
     if (S.mode === 'boss') {

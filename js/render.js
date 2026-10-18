@@ -224,7 +224,29 @@ DD.render = {
             sx = idleFrame * 32;
             sy = 0;
           }
-          ctx.drawImage(sheet, sx, sy, 32, 32, e.x - 16, e.y - 16, 32, 32);
+          const attack = e.attackAnimTimer < 0.48;
+          let width = 32, height = 32, dx = 0, dy = 0;
+          if (attack) {
+            const t = e.attackAnimTimer;
+            const hero = DD.state.playerPos(), len = Math.hypot(hero.x - e.x, hero.y - e.y) || 1;
+            if (t < 0.16) { width = 40; height = 22; }
+            else {
+              const pulse = Math.sin(Math.PI * Math.min(1, (t - 0.16) / 0.32));
+              width = 30 + pulse * 6; height = 32 + pulse * 10;
+              dx = (hero.x - e.x) / len * pulse * 12;
+              dy = (hero.y - e.y) / len * pulse * 12;
+            }
+            // Pixel impact flash at the contact point distinguishes attacks from idle.
+            if (t >= 0.18 && t < 0.3) {
+              const ix = Math.round(e.x + (hero.x - e.x) / len * 22);
+              const iy = Math.round(e.y + (hero.y - e.y) / len * 22);
+              ctx.fillStyle = '#fff6cd';
+              ctx.fillRect(ix - 7, iy - 2, 14, 4); ctx.fillRect(ix - 2, iy - 7, 4, 14);
+            }
+          }
+          ctx.save(); ctx.imageSmoothingEnabled = false;
+          ctx.drawImage(sheet, sx, sy, 32, 32, Math.round(e.x - width / 2 + dx), Math.round(e.y + 16 - height + dy), Math.round(width), Math.round(height));
+          ctx.restore();
         } else {
           this.drawImageOrFallback(def.asset, () => {
             ctx.fillStyle = '#58d676';
@@ -268,6 +290,30 @@ DD.render = {
       ctx.fillStyle = '#d4f0ff'; ctx.beginPath(); ctx.arc(p.x, p.y, 4, 0, Math.PI * 2); ctx.fill();
     });
   },
+  drawDamageNumbers() {
+    const ctx = DD.state.ctx;
+    const glyphs = {
+      '0':['111','101','101','101','111'], '1':['010','110','010','010','111'],
+      '2':['111','001','111','100','111'], '3':['111','001','111','001','111'],
+      '4':['101','101','111','001','001'], '5':['111','100','111','001','111'],
+      '6':['111','100','111','101','111'], '7':['111','001','010','010','010'],
+      '8':['111','101','111','101','111'], '9':['111','101','111','001','111'],
+      '-':['000','000','111','000','000'], '.':['000','000','000','000','010']
+    };
+    for (const n of DD.state.damageNumbers || []) {
+      const pixels = [];
+      const left = Math.round(n.x - (n.text.length * 8 - 2) / 2);
+      const top = Math.round(n.y - n.age * 28);
+      [...n.text].forEach((ch, i) => (glyphs[ch] || glyphs['0']).forEach((row, y) =>
+        [...row].forEach((v, x) => { if (v === '1') pixels.push([left + i * 8 + x * 2, top + y * 2]); })));
+      ctx.save(); ctx.globalAlpha = Math.max(0, 1 - n.age);
+      ctx.fillStyle = '#ffffff';
+      for (const [x,y] of pixels) ctx.fillRect(x - 1, y - 1, 4, 4);
+      ctx.fillStyle = '#f24141';
+      for (const [x,y] of pixels) ctx.fillRect(x, y, 2, 2);
+      ctx.restore();
+    }
+  },
   drawBossHud() {
     if (DD.state.mode !== 'boss') return;
     const ctx = DD.state.ctx;
@@ -287,6 +333,7 @@ DD.render = {
     this.drawGoblinSignMeters();
     this.drawProjectiles();
     this.drawPlayerAndDwarves();
+    this.drawDamageNumbers();
     this.drawBossHud();
   }
 };
