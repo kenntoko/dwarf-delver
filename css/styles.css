@@ -148,3 +148,13 @@ canvas {
 #itemOverlay .modal h2 { font-size:14px; margin:0; }
 #itemOverlay .modal p { font-size:12px; margin:3px 0; }
 #itemOverlay .modal button { width:auto; margin:2px 0; padding:4px 12px; }
+
+/* Exit discovery pauses the floor until the player makes a choice. */
+[hidden] { display: none !important; }
+#exitDialog { position: absolute; inset: 0; display: none; align-items: center; justify-content: center; padding: 20px; background: rgba(5,5,5,.76); z-index: 30; }
+#exitDialog.show { display: flex; }
+#exitDialog .modal { max-width: 440px; text-align: center; }
+.exit-actions { display: flex; gap: 12px; }
+#descendBtn.exit-ready { animation: exit-pulse 1s ease-in-out infinite; border-color: #ffcc66; }
+@keyframes exit-pulse { 0%, 100% { opacity: 1; box-shadow: 0 0 8px rgba(255,204,102,.4); } 50% { opacity: .5; box-shadow: none; } }
+@media (prefers-reduced-motion: reduce) { #descendBtn.exit-ready { animation: none; } }

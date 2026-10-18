@@ -4,7 +4,7 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Dwarf Delver Pre-release</title>
-  <link rel="stylesheet" href="./css/styles.css" />
+  <link rel="stylesheet" href="./css/styles.css?v=exit-choice-1" />
 </head>
 <body>
   <div id="app">
@@ -24,6 +24,7 @@
         <div id="overlay"></div>
         <div id="itemOverlay"></div>
         <div id="messageBanner"></div>
+        <div id="exitDialog"></div>
       </div>
     </div>
 
@@ -38,7 +39,7 @@
           <div class="upgradeItem">精霊 <strong id="dwarfText">1</strong></div>
           <div class="upgradeItem">出現間隔 <strong id="spawnText">9.00s</strong></div>
         </div>
-        <button id="descendBtn" disabled>出口が見つかったら次の階層へ</button>
+        <button id="descendBtn" hidden disabled>B2Fに降りる</button>
       </div>
 
       <div class="panel">
@@ -69,9 +70,9 @@
   <script src="./js/data.js"></script>
   <script src="./js/assets.js?v=exit-ladder-1"></script>
   <script src="./js/state.js"></script>
-  <script src="./js/board.js?v=carry-entry-1"></script>
-  <script src="./js/systems.js?v=carry-entry-1"></script>
-  <script src="./js/ui.js"></script>
+  <script src="./js/board.js?v=exit-choice-1"></script>
+  <script src="./js/systems.js?v=exit-choice-1"></script>
+  <script src="./js/ui.js?v=exit-choice-1"></script>
   <script src="./js/render.js?v=carry-entry-1"></script>
   <script src="./js/main.js?v=chord-1"></script>
 </body>

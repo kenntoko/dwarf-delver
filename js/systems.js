@@ -9,6 +9,9 @@ DD.systems = {
     const S = DD.state;
     const previousExit = floor > 1 && floor <= 3 && S.board && S.board.kind === 'dungeon'
       ? { ...S.board.exit } : null;
+    DD.ui.closeExitPrompt();
+    S.exitPromptPending = false;
+    S.exitDeferred = false;
     S.floor = floor;
     S.floorTimer = 0;
     S.spawnTimer = 0;
@@ -26,7 +29,8 @@ DD.systems = {
       if (S.board.grid[S.board.exit.y][S.board.exit.x].isOpen) {
         S.discoveredExit = true;
         S.readyToDescend = true;
-        this.addLog('出口を発見した～。Nキーかボタンで次へ進めるよ～', 'good');
+        S.exitPromptPending = true;
+        this.addLog('出口を発見した～。次の階層に降りるか選べるよ～', 'good');
       }
     } else {
       S.mode = 'boss';
@@ -77,6 +81,8 @@ DD.systems = {
   loseRun(reason) {
     const S = DD.state;
     if (S.mode === 'won' || S.mode === 'lost') return;
+    DD.ui.closeExitPrompt();
+    S.exitPromptPending = false;
     S.mode = 'lost';
     S.paused = true;
     this.addLog(reason, 'danger');
@@ -84,6 +90,8 @@ DD.systems = {
   },
   winRun() {
     const S = DD.state;
+    DD.ui.closeExitPrompt();
+    S.exitPromptPending = false;
     S.mode = 'won';
     S.paused = true;
     this.addLog('ゴーレムを攻略して討伐成功～', 'good');
@@ -121,7 +129,8 @@ DD.systems = {
       if (ct.isExit && S.mode === 'dungeon') {
         S.discoveredExit = true;
         S.readyToDescend = true;
-        this.addLog('出口を発見した～。Nキーかボタンで次へ進めるよ～', 'good');
+        S.exitPromptPending = true;
+        this.addLog('出口を発見した～。次の階層に降りるか選べるよ～', 'good');
       }
       if (ct.number === 0) {
         DD.utils.neighbors8(cx, cy).forEach(([nx, ny]) => {
@@ -131,6 +140,7 @@ DD.systems = {
       }
     }
     if (S.mode === 'boss' && DD.board.bossCleared(board)) this.winRun();
+    DD.ui.maybeShowExitPrompt();
   },
   chordTile(x, y) {
     const S = DD.state;
@@ -505,7 +515,7 @@ DD.systems = {
   },
   nextFloor() {
     const S = DD.state;
-    if (S.mode !== 'dungeon' || !S.readyToDescend) return;
+    if (S.mode !== 'dungeon' || !S.readyToDescend || (S.paused && S.pauseReason !== 'exit')) return;
     if (S.floor < 3) this.beginFloor(S.floor + 1);
     else this.beginFloor(4);
   },

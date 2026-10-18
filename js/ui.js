@@ -21,6 +21,7 @@ DD.ui = {
       phasePill: document.getElementById('phasePill'),
       statusText: document.getElementById('statusText'),
       floorInfo: document.getElementById('floorInfo'),
+      exitDialog: document.getElementById('exitDialog'),
       descendBtn: document.getElementById('descendBtn')
     };
     S.canvas = S.dom.canvas;
@@ -28,6 +29,15 @@ DD.ui = {
     S.dom.descendBtn.addEventListener('click', () => DD.systems.nextFloor());
     window.addEventListener('keydown', (e) => {
       if (e.key.toLowerCase() === 'n') DD.systems.nextFloor();
+      if (DD.state.pauseReason === 'exit') {
+        if (e.key === 'Escape') this.continueExploring();
+        if (e.key === 'Tab') {
+          const buttons = [...DD.state.dom.exitDialog.querySelectorAll('button')];
+          const current = buttons.indexOf(document.activeElement);
+          e.preventDefault();
+          buttons[(current + (e.shiftKey ? -1 : 1) + buttons.length) % buttons.length].focus();
+        }
+      }
       if (e.key === 'Escape' && DD.state.pauseReason === 'item') this.clearItemMode();
     });
   },
@@ -45,7 +55,10 @@ DD.ui = {
     D.dwarfText.textContent = S.player.upgrades.summon;
     D.spawnText.textContent = `${DD.systems.currentSpawnInterval().toFixed(2)}s`;
     D.phasePill.textContent = S.mode === 'boss' ? 'BOSS' : `B${S.floor}F`;
-    D.descendBtn.disabled = !S.readyToDescend || S.mode !== 'dungeon';
+    D.descendBtn.hidden = !(S.exitDeferred && S.readyToDescend && S.mode === 'dungeon');
+    D.descendBtn.disabled = !S.readyToDescend || S.mode !== 'dungeon' || S.paused;
+    D.descendBtn.textContent = `B${S.floor + 1}Fに降りる`;
+    D.descendBtn.classList.toggle('exit-ready', !D.descendBtn.hidden);
 
     D.upgradesBox.innerHTML = Object.keys(DD.data.upgradeDefs).map(k => {
       const def = DD.data.upgradeDefs[k];
@@ -98,9 +111,11 @@ DD.ui = {
     S.paused = false;
     S.pauseReason = '';
     S.pendingChoices = null;
+    this.maybeShowExitPrompt();
   },
   enterItemMode(itemKey) {
     const S = DD.state;
+    if (S.paused && S.pauseReason !== 'item') return;
     S.itemMode = itemKey;
     S.paused = true;
     S.pauseReason = 'item';
@@ -117,6 +132,40 @@ DD.ui = {
     }
     S.dom.itemOverlay.classList.remove('show');
     S.dom.itemOverlay.innerHTML = '';
+    this.maybeShowExitPrompt();
+  },
+  maybeShowExitPrompt() {
+    const S = DD.state;
+    if (!S.exitPromptPending || S.mode !== 'dungeon' || S.paused || S.itemMode) return;
+    S.exitPromptPending = false;
+    S.paused = true;
+    S.pauseReason = 'exit';
+    S.exitReturnFocus = document.activeElement;
+    const next = S.floor + 1;
+    S.dom.exitDialog.innerHTML = `<div class="modal" role="dialog" aria-modal="true" aria-labelledby="exitDialogTitle"><h2 id="exitDialogTitle">出口を発見！</h2><p>B${next}Fに降りますか？</p><div class="exit-actions"><button class="messageButton" id="confirmDescend">B${next}Fに降りる</button><button class="messageButton" id="continueExplore">探索を続ける</button></div></div>`;
+    S.dom.exitDialog.classList.add('show');
+    document.getElementById('confirmDescend').onclick = () => DD.systems.nextFloor();
+    document.getElementById('continueExplore').onclick = () => this.continueExploring();
+    document.getElementById('confirmDescend').focus();
+  },
+  closeExitPrompt() {
+    const S = DD.state;
+    if (S.dom && S.dom.exitDialog) {
+      S.dom.exitDialog.classList.remove('show');
+      S.dom.exitDialog.innerHTML = '';
+    }
+    if (S.pauseReason === 'exit') {
+      S.paused = false;
+      S.pauseReason = '';
+    }
+  },
+  continueExploring() {
+    const S = DD.state;
+    if (S.pauseReason !== 'exit') return;
+    this.closeExitPrompt();
+    S.exitDeferred = true;
+    this.refreshHud();
+    S.dom.descendBtn.focus();
   },
   showBanner(title, html) {
     const box = DD.state.dom.messageBanner;

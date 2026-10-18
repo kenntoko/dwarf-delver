@@ -57,7 +57,7 @@ DD.board = {
       }
     }
   },
-  generateDungeonFloor(floorNum, previousExit = null) {
+  generateDungeonFloor(floorNum, previousExit = null, attempt = 0) {
     const U = DD.utils;
     const { W, H } = DD.config;
     const entryX = floorNum > 1 && previousExit ? previousExit.x : Math.floor(W / 2);
@@ -142,6 +142,30 @@ DD.board = {
     });
 
     this.expandInitialCaverns(board);
+
+    // Place the real exit only after the full starting cavern has been revealed.
+    board.grid[exitY][exitX].isExit = false;
+    const reachable = new Set([U.key(entryX, entryY)]);
+    const queue = [[entryX, entryY]];
+    const hiddenExits = [];
+    for (let i = 0; i < queue.length; i++) {
+      const [cx, cy] = queue[i];
+      if (!board.grid[cy][cx].isOpen) hiddenExits.push([cx, cy]);
+      for (const [nx, ny] of U.neighbors4(cx, cy)) {
+        const key = U.key(nx, ny);
+        if (!reachable.has(key) && !board.grid[ny][nx].isDanger) {
+          reachable.add(key);
+          queue.push([nx, ny]);
+        }
+      }
+    }
+    if (!hiddenExits.length) {
+      if (attempt >= 31) throw new Error('Could not generate a hidden reachable exit');
+      return this.generateDungeonFloor(floorNum, previousExit, attempt + 1);
+    }
+    const [hiddenX, hiddenY] = U.choice(hiddenExits);
+    board.exit = { x: hiddenX, y: hiddenY };
+    board.grid[hiddenY][hiddenX].isExit = true;
 
     const safeClosed = [];
     for (let yy = 0; yy < H; yy++) for (let xx = 0; xx < W; xx++) {
