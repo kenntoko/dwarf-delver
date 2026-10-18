@@ -63,7 +63,7 @@ DD.systems = {
     while (S.player.xp >= S.player.nextXp) {
       S.player.xp -= S.player.nextXp;
       S.player.level += 1;
-      S.player.nextXp = Math.round(S.player.nextXp * 1.25);
+      S.player.nextXp = Math.round(S.player.nextXp * 3);
       levelsGained += 1;
     }
     if (levelsGained > 0) {
