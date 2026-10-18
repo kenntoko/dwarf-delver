@@ -774,7 +774,7 @@ DD.systems = {
     }
     S.heroHurtAge = Math.min(999, (S.heroHurtAge ?? 999) + dt);
     if (S.paused || S.mode === 'lost' || S.mode === 'won') return;
-    if (S.heroHurtAge >= 0.6) S.heroIdleTime = ((S.heroIdleTime || 0) + dt) % 10;
+    S.heroIdleTime = ((S.heroIdleTime || 0) + dt) % 11.28;
     S.floorTimer += dt;
     if (S.mode === 'boss') {
       S.bossAttackTimer -= dt;
