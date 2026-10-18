@@ -7,6 +7,8 @@ DD.systems = {
   },
   beginFloor(floor) {
     const S = DD.state;
+    const previousExit = floor > 1 && floor <= 3 && S.board && S.board.kind === 'dungeon'
+      ? { ...S.board.exit } : null;
     S.floor = floor;
     S.floorTimer = 0;
     S.spawnTimer = 0;
@@ -18,7 +20,7 @@ DD.systems = {
     DD.ui.clearItemMode();
     if (floor <= 3) {
       S.mode = 'dungeon';
-      S.board = DD.board.generateDungeonFloor(floor);
+      S.board = DD.board.generateDungeonFloor(floor, previousExit);
       S.spawnBase = 9 / Math.pow(1.1, floor - 1);
       this.addLog(`B${floor}F に到着～`, 'good');
       if (S.board.grid[S.board.exit.y][S.board.exit.x].isOpen) {

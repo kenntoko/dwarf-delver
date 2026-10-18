@@ -140,7 +140,7 @@ DD.render = {
   },
   drawDungeonEntrance() {
     const S = DD.state;
-    if (S.mode !== 'dungeon' || !S.board || !S.board.entry) return;
+    if (S.mode !== 'dungeon' || !S.board || !S.board.entry || S.board.floorNum !== 1) return;
     const { TILE, boardRect } = DD.config;
     const ctx = S.ctx;
     const cx = boardRect.x + (S.board.entry.x + 0.5) * TILE;

@@ -57,13 +57,16 @@ DD.board = {
       }
     }
   },
-  generateDungeonFloor(floorNum) {
+  generateDungeonFloor(floorNum, previousExit = null) {
     const U = DD.utils;
     const { W, H } = DD.config;
-    const entryX = Math.floor(W / 2);
-    const entryY = 0;
-    const exitX = U.randInt(20, 29);
-    const exitY = U.randInt(2, H - 3);
+    const entryX = floorNum > 1 && previousExit ? previousExit.x : Math.floor(W / 2);
+    const entryY = floorNum > 1 && previousExit ? previousExit.y : 0;
+    const exitOptions = [];
+    for (let ey = 2; ey < H - 2; ey++) for (let ex = 20; ex < W; ex++) {
+      if (ex !== entryX || ey !== entryY) exitOptions.push([ex, ey]);
+    }
+    const [exitX, exitY] = U.choice(exitOptions);
     const board = {
       kind: 'dungeon',
       grid: this.newGrid(),
@@ -79,25 +82,25 @@ DD.board = {
     while (x !== exitX || y !== exitY) {
       const options = [];
       if (x < exitX) options.push([x+1,y],[x+1,y],[x+1,y]);
+      if (x > exitX) options.push([x-1,y],[x-1,y],[x-1,y]);
       if (y < exitY) options.push([x,y+1]);
       if (y > exitY) options.push([x,y-1]);
-      if (Math.random() < 0.22 && x < exitX) {
-        const dy = U.choice([-1,1]);
-        if (U.inBounds(x, y+dy)) options.push([x, y+dy]);
-      }
       [x, y] = U.choice(options.filter(([a,b]) => U.inBounds(a,b)));
       safe.add(U.key(x, y));
     }
 
-    const openSet = new Set([U.key(entryX, entryY), U.key(entryX, entryY + 1)]);
-    safe.add(U.key(entryX, entryY + 1)); // initial opened tiles must always be protected
-    let frontier = [[entryX, entryY + 1], [entryX, entryY]];
+    const nextY = entryY + 1 < H ? entryY + 1 : entryY - 1;
+    const startMinX = U.clamp(entryX - 4, 0, W - 8);
+    const startMinY = U.clamp(entryY - 3, 0, H - 8);
+    const openSet = new Set([U.key(entryX, entryY), U.key(entryX, nextY)]);
+    safe.add(U.key(entryX, nextY)); // initial opened tiles must always be protected
+    let frontier = [[entryX, nextY], [entryX, entryY]];
     while (openSet.size < 22) {
       const [cx, cy] = U.choice(frontier);
-      const candidates = U.shuffle(U.neighbors4(cx, cy)).filter(([nx, ny]) => nx >= entryX - 4 && nx <= entryX + 3 && ny < 8 && !openSet.has(U.key(nx, ny)));
+      const candidates = U.shuffle(U.neighbors4(cx, cy)).filter(([nx, ny]) => nx >= startMinX && nx < startMinX + 8 && ny >= startMinY && ny < startMinY + 8 && !openSet.has(U.key(nx, ny)));
       if (!candidates.length) {
         frontier = frontier.filter(([fx, fy]) => !(fx === cx && fy === cy));
-        if (!frontier.length) frontier = [[entryX, entryY + 1]];
+        if (!frontier.length) frontier = [[entryX, nextY]];
         continue;
       }
       const [nx, ny] = candidates[0];
