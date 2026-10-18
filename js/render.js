@@ -94,10 +94,6 @@ DD.render = {
       ctx.strokeRect(px + 0.5, py + 0.5, TILE - 1, TILE - 1);
       ctx.globalAlpha = 1;
 
-      if (t.isEntrance && DD.state.mode === 'dungeon') {
-        ctx.fillStyle = colors.entrance;
-        ctx.beginPath(); ctx.arc(px + TILE/2, py + 8, 6, 0, Math.PI * 2); ctx.fill();
-      }
       if (t.isExit && (DD.state.discoveredExit || t.isOpen)) {
         ctx.fillStyle = colors.exit;
         ctx.fillRect(px + TILE * 0.25, py + 6, TILE * 0.5, TILE - 12);
@@ -134,6 +130,58 @@ DD.render = {
         }, px + 8, py + 10, 20, 16);
       }
     }
+  },
+  drawDungeonEntrance() {
+    const S = DD.state;
+    if (S.mode !== 'dungeon' || !S.board || !S.board.entry) return;
+    const { TILE, boardRect } = DD.config;
+    const ctx = S.ctx;
+    const cx = boardRect.x + (S.board.entry.x + 0.5) * TILE;
+    const top = boardRect.y + S.board.entry.y * TILE;
+    ctx.save();
+    ctx.translate(cx, top);
+    ctx.scale(TILE / 36, TILE / 36);
+    // The cave sits in the margin above the entry cell, clear of the player.
+    ctx.beginPath();
+    ctx.moveTo(-35, 0); ctx.lineTo(-34, -20); ctx.lineTo(-28, -20);
+    ctx.lineTo(-28, -37); ctx.lineTo(-19, -37); ctx.lineTo(-19, -48);
+    ctx.lineTo(-8, -48); ctx.lineTo(-8, -54); ctx.lineTo(12, -54);
+    ctx.lineTo(12, -49); ctx.lineTo(24, -49); ctx.lineTo(24, -38);
+    ctx.lineTo(30, -38); ctx.lineTo(30, -23); ctx.lineTo(35, -23);
+    ctx.lineTo(35, 0); ctx.closePath();
+    ctx.fillStyle = '#30251e'; ctx.fill();
+    ctx.save(); ctx.clip();
+    const rock = DD.assets.get('cave_wall_32');
+    if (rock && rock.complete && rock.naturalWidth > 0) {
+      for (let y = -64; y < 0; y += 32) for (let x = -48; x < 36; x += 32) {
+        ctx.drawImage(rock, x, y, 32, 32);
+      }
+    }
+    ctx.fillStyle = 'rgba(15,10,8,.28)'; ctx.fillRect(-36, -18, 72, 18);
+    ctx.restore();
+    ctx.strokeStyle = '#17120f'; ctx.lineWidth = 2; ctx.stroke();
+    // Recessed irregular arch, with the darkest part at the back.
+    ctx.beginPath(); ctx.moveTo(-20, 0); ctx.lineTo(-20, -24);
+    ctx.lineTo(-15, -24); ctx.lineTo(-15, -35); ctx.lineTo(-8, -35);
+    ctx.lineTo(-8, -41); ctx.lineTo(7, -41); ctx.lineTo(7, -37);
+    ctx.lineTo(15, -37); ctx.lineTo(15, -28); ctx.lineTo(20, -28);
+    ctx.lineTo(20, 0); ctx.closePath();
+    ctx.fillStyle = '#211810'; ctx.fill();
+    ctx.strokeStyle = '#735238'; ctx.lineWidth = 3; ctx.stroke();
+    ctx.beginPath(); ctx.moveTo(-15, 0); ctx.lineTo(-15, -25);
+    ctx.lineTo(-10, -25); ctx.lineTo(-10, -33); ctx.lineTo(-5, -33);
+    ctx.lineTo(-5, -36); ctx.lineTo(5, -36); ctx.lineTo(5, -32);
+    ctx.lineTo(12, -32); ctx.lineTo(12, -23); ctx.lineTo(15, -23);
+    ctx.lineTo(15, 0); ctx.closePath();
+    ctx.fillStyle = '#080909'; ctx.fill();
+    // Three widening stone steps lead down to the hero's starting tile.
+    for (let i = 0; i < 3; i++) {
+      const width = 18 + i * 6, y = -14 + i * 5;
+      ctx.fillStyle = ['#40382d', '#68533b', '#8b6b47'][i];
+      ctx.fillRect(-width / 2, y, width, 4);
+      ctx.fillStyle = '#211b16'; ctx.fillRect(-width / 2, y + 3, width, 2);
+    }
+    ctx.restore();
   },
   drawPlayerAndDwarves() {
     const ctx = DD.state.ctx;
@@ -227,6 +275,7 @@ DD.render = {
     this.drawBackground();
     if (DD.state.mode === 'boss') this.drawEnemies();
     this.drawBoard();
+    this.drawDungeonEntrance();
     if (DD.state.mode !== 'boss') this.drawEnemies();
     this.drawGoblinSignMeters();
     this.drawProjectiles();
