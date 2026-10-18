@@ -21,6 +21,11 @@ DD.systems = {
       S.board = DD.board.generateDungeonFloor(floor);
       S.spawnBase = 9 / Math.pow(1.1, floor - 1);
       this.addLog(`B${floor}F に到着～`, 'good');
+      if (S.board.grid[S.board.exit.y][S.board.exit.x].isOpen) {
+        S.discoveredExit = true;
+        S.readyToDescend = true;
+        this.addLog('出口を発見した～。Nキーかボタンで次へ進めるよ～', 'good');
+      }
     } else {
       S.mode = 'boss';
       S.board = DD.board.generateBossBoard();

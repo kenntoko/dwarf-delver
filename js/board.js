@@ -41,6 +41,22 @@ DD.board = {
     if (mode === 'boss') return true;
     return DD.utils.neighbors8(x, y).some(([nx, ny]) => board.grid[ny][nx].active && board.grid[ny][nx].isOpen);
   },
+  expandInitialCaverns(board) {
+    const queue = [];
+    for (let y = 0; y < DD.config.H; y++) for (let x = 0; x < DD.config.W; x++) {
+      const tile = board.grid[y][x];
+      if (tile.active && tile.isOpen && tile.number === 0) queue.push([x, y]);
+    }
+    for (let i = 0; i < queue.length; i++) {
+      for (const [x, y] of DD.utils.neighbors8(...queue[i])) {
+        const tile = board.grid[y][x];
+        if (!tile.active || tile.isOpen || tile.isDanger || tile.flagged) continue;
+        tile.isOpen = true;
+        tile.autoHint = false;
+        if (tile.number === 0) queue.push([x, y]);
+      }
+    }
+  },
   generateDungeonFloor(floorNum) {
     const U = DD.utils;
     const { W, H } = DD.config;
@@ -121,6 +137,8 @@ DD.board = {
       const [ox, oy] = s.split(',').map(Number);
       board.grid[oy][ox].isOpen = true;
     });
+
+    this.expandInitialCaverns(board);
 
     const safeClosed = [];
     for (let yy = 0; yy < H; yy++) for (let xx = 0; xx < W; xx++) {
