@@ -45,14 +45,18 @@ DD.ui = {
   renderMeterValue(element, value, label) {
     if (element.dataset.value === value) return;
     element.dataset.value = value;
-    element.setAttribute('aria-label', label + ' ' + value);
+    element.setAttribute('aria-label', (label ? label + ' ' : '') + value);
     const glyphs = {
       '0':['111','101','101','101','111'],'1':['010','110','010','010','111'],
       '2':['111','001','111','100','111'],'3':['111','001','111','001','111'],
       '4':['101','101','111','001','001'],'5':['111','100','111','001','111'],
       '6':['111','100','111','101','111'],'7':['111','001','010','010','010'],
       '8':['111','101','111','101','111'],'9':['111','101','111','001','111'],
-      '/':['001','001','010','100','100'],'.':['000','000','000','000','010']
+      '/':['001','001','010','100','100'],'.':['000','000','000','000','010'],
+      'H':['101','101','111','101','101'],'P':['110','101','110','100','100'],
+      'E':['111','100','110','100','111'],'X':['101','101','010','101','101'],
+      'N':['101','111','111','111','101'],'T':['111','010','010','010','010'],
+      ':':['000','010','000','010','000'],'→':['00100','00010','11111','00010','00100']
     };
     element.innerHTML = [...value].map(ch => {
       const glyph = glyphs[ch];
@@ -61,7 +65,7 @@ DD.ui = {
       glyph.forEach((row,y) => [...row].forEach((v,x) => {
         if (v === '1') pixels += `<rect x="${x}" y="${y}" width="1" height="1"/>`;
       }));
-      return `<svg viewBox="0 0 3 5" aria-hidden="true" focusable="false">${pixels}</svg>`;
+      return `<svg viewBox="0 0 ${glyph[0].length} 5" style="width:${glyph[0].length * 2}px" aria-hidden="true" focusable="false">${pixels}</svg>`;
     }).join('');
   },
   shakeHpBar() {
@@ -77,9 +81,9 @@ DD.ui = {
   refreshHud() {
     const S = DD.state, D = S.dom;
     D.hpBar.style.clipPath = `inset(0 ${100 - DD.utils.clamp(S.player.hp / S.player.maxHp * 100, 0, 100)}% 0 0)`;
-    this.renderMeterValue(D.hpText, `${Math.ceil(S.player.hp)} / ${S.player.maxHp}`, 'HP');
+    this.renderMeterValue(D.hpText, `HP:${Math.ceil(S.player.hp)}/${S.player.maxHp}`, '');
     D.xpBar.style.clipPath = `inset(0 ${100 - DD.utils.clamp(S.player.xp / S.player.nextXp * 100, 0, 100)}% 0 0)`;
-    this.renderMeterValue(D.xpText, `${S.player.xp} / ${S.player.nextXp}`, 'EXP');
+    this.renderMeterValue(D.xpText, `EXP:NEXT→${Math.max(0, S.player.nextXp - S.player.xp)}`, '');
     D.levelText.textContent = S.player.level;
     D.defText.textContent = `${S.player.upgrades.defense * 8}%`;
     D.dwarfText.textContent = S.player.upgrades.summon;
