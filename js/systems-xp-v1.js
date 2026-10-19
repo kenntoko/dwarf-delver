@@ -236,6 +236,12 @@ DD.systems = {
     }
     return list;
   },
+  spawnEnemyWave() {
+    const S = DD.state;
+    const doubleChance = S.mode === 'dungeon' ? (S.floor === 2 ? 0.05 : S.floor === 3 ? 0.08 : 0) : 0;
+    const count = doubleChance > 0 && Math.random() < doubleChance ? 2 : 1;
+    for (let i = 0; i < count; i++) this.spawnEnemy();
+  },
   spawnEnemy() {
     const S = DD.state;
     const pool = this.currentEnemyPool();
@@ -856,7 +862,7 @@ DD.systems = {
     const interval = this.currentSpawnInterval();
     while (S.spawnTimer >= interval) {
       S.spawnTimer -= interval;
-      this.spawnEnemy();
+      this.spawnEnemyWave();
     }
     this.updateScout(dt);
     this.updateDwarves(dt);
