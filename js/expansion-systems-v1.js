@@ -1,6 +1,11 @@
 (() => {
 const X=DD.expansion,S=DD.state,U=DD.utils,T=DD.config.TILE;
-const base={beginFloor:DD.systems.beginFloor,update:DD.systems.update,updateEnemy:DD.systems.updateEnemy,applyDamage:DD.systems.applyDamage,applyUpgrade:DD.systems.applyUpgrade};
+const base={beginFloor:DD.systems.beginFloor,update:DD.systems.update,updateEnemy:DD.systems.updateEnemy,applyDamage:DD.systems.applyDamage,applyUpgrade:DD.systems.applyUpgrade,currentSpawnInterval:DD.systems.currentSpawnInterval};
+// Each player level multiplies spawn frequency by 1.15; retain existing
+// floor, elapsed-time and exploration factors, with a one-second floor.
+DD.systems.currentSpawnInterval=function(){
+  return Math.max(1,base.currentSpawnInterval.call(this)/Math.pow(1.15,Math.max(0,S.player.level-1)));
+};
 Object.assign(X,{
   resetFloor(){
     S.digClock=0;S.digQueue=[];S.digPending=new Set();S.openRevision=0;
@@ -177,7 +182,7 @@ Object.assign(X,{
         this.moveTo(g,g.goal,24,dt);
       }
     }
-    if(S.maid){const a=S.maid;a.x=p.x-38;a.y=p.y-8;a.age+=dt;a.healTime+=dt;while(a.healTime+1e-8>=5){a.healTime=Math.max(0,a.healTime-5);S.player.hp=Math.min(S.player.maxHp,S.player.hp+this.lv('maid')*2);}}
+    if(S.maid){const a=S.maid;a.x=p.x-38;a.y=p.y-8;a.age+=dt;a.healTime+=dt;while(a.healTime+1e-8>=10){a.healTime=Math.max(0,a.healTime-10);S.player.hp=Math.min(S.player.maxHp,S.player.hp+this.lv('maid')*2);}}
   },
   updatePerfume(dt){
     if(!this.lv('perfume'))return;S.perfumeTimer+=dt;const p=S.playerPos(),t=this.stat('perfume');
