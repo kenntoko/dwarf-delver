@@ -58,6 +58,7 @@ DD.main = {
     requestAnimationFrame(this.loop.bind(this));
   },
   start() {
+    DD.state.runTime = 0;
     DD.ui.bindDom();
     this.bindCanvasInput();
     DD.systems.addLog('プレリリース版スタート～', 'good');

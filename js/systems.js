@@ -803,6 +803,7 @@ DD.systems = {
     if (S.paused || S.mode === 'lost' || S.mode === 'won') return;
     S.heroIdleTime = ((S.heroIdleTime || 0) + dt) % 11.28;
     S.floorTimer += dt;
+    S.runTime = (S.runTime || 0) + dt;
     if (S.mode === 'boss') {
       S.bossAttackTimer -= dt;
       if (S.bossAttackTimer <= 0) {

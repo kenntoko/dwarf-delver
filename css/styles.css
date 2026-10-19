@@ -209,3 +209,69 @@ canvas {
 /* The map stays visible; only the item flies to the inventory. */
 #lootDialog.loot-flight{display:block;background:transparent;padding:0;pointer-events:none}
 .chest-flying-item{position:fixed;width:32px;height:32px;image-rendering:pixelated;transform:translate(-50%,-50%);pointer-events:none}
+
+/* Game GUI: every control lives inside the game frame. */
+@font-face{font-family:GuiDot;src:url('../assets/gui-dot.ttf') format('truetype');font-display:block}
+body,button,summary{font-family:GuiDot,monospace;font-size:16px}
+body{line-height:1.5}
+#app{display:block;width:min(calc(100vw - 16px),max(320px,calc((100dvh - var(--gui-chrome,248px))*1.388889)));max-width:1200px;padding:0;margin:8px auto}
+#boardWrap{border-radius:0;border-color:#6e5437;overflow:hidden}
+.game-hud{display:grid;gap:6px;padding:10px 12px;background:#1d1813;border-bottom:2px solid #4a3828}
+.floor-row{position:relative;display:flex;align-items:center;justify-content:center;min-height:24px}
+.floor-readout{position:static;transform:none;left:auto;top:auto;height:20px;gap:4px}
+.floor-readout svg{width:12px!important;height:20px}
+#descendBtn{position:absolute;right:0;top:0;margin:0;padding:1px 8px;width:auto;border:2px solid #b98c42;background:#4d391f;color:#fff0c8;font-size:12px}
+.run-stats{display:flex;align-items:center;justify-content:space-between;gap:12px;min-height:14px}
+.stat-readout{position:static;transform:none;left:auto;top:auto;margin:0;height:14px}
+.inventory-row{display:flex;align-items:flex-start;justify-content:space-between;gap:12px;min-height:52px}
+.passive-dock{flex:1;display:flex;flex-wrap:wrap;gap:4px;min-width:0}
+#inventoryDock,.inventory-dock{position:static;left:auto;right:auto;top:auto;z-index:auto;display:flex;flex-direction:row;justify-content:flex-end;flex-wrap:wrap;gap:4px;pointer-events:auto;flex:0 1 48%;width:48%;min-width:0;min-height:52px}
+.item-slot{margin:0;flex:0 0 40px}
+.inspect-icon{position:relative;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:0;border:2px solid #77613e;background:#2a2119;color:#fff1d1;border-radius:0;cursor:pointer;padding:2px}
+.inspect-icon img{display:block;width:32px;height:32px;image-rendering:pixelated}
+.hud-passive{width:40px;height:52px;flex:0 0 40px}
+.icon-value{font-size:12px;line-height:12px;white-space:nowrap}
+.inspect-icon:focus-visible,.gui-menu button:focus-visible,#menuButton:focus-visible{outline:2px solid #fff1bd;outline-offset:2px}
+.game-footer{display:flex;align-items:center;min-height:44px;padding:4px 8px;border-top:2px solid #4a3828;background:#1d1813}
+#menuButton{padding:4px 16px;background:#3e3020;color:#fff1d1;border:2px solid #a48857;border-radius:0;cursor:pointer}
+#menuButton:disabled{opacity:.5;cursor:default}
+.item-dialog-layer{position:absolute}
+#overlay,#messageBanner,#exitDialog,#itemConfirmDialog{z-index:65}
+.modal,.choice{font-family:GuiDot,monospace;border-radius:0}
+.modal{max-height:calc(100% - 24px);overflow:auto}
+.modal h2{font-size:20px;font-weight:400}
+.choice{min-width:0}
+.choice-icon{display:block;width:48px;height:48px;image-rendering:pixelated;margin:0 auto 8px}
+.choiceTitle{text-align:center;font-size:16px}
+.choice small{font-size:12px}
+.gui-dialog{position:absolute;inset:0;z-index:75;display:none;align-items:center;justify-content:center;background:rgba(8,6,4,.82);padding:12px}
+.gui-dialog.show{display:flex}
+.gui-menu{width:100%;max-width:720px;max-height:100%;display:flex;flex-direction:column;background:#241d18;border:4px solid #b39662;box-shadow:6px 6px 0 #080605;min-height:0}
+.menu-heading{display:flex;align-items:center;justify-content:space-between;gap:16px;border-bottom:2px solid #685239;padding:8px 12px}
+.menu-heading h1{font-size:20px;margin:0;font-weight:400}
+.gui-menu button{background:#3e3020;border:2px solid #8c724b;color:#fff1d1;border-radius:0}
+.menu-heading button{padding:4px 12px;cursor:pointer}
+.menu-scroll{overflow:auto;padding:12px;min-height:0}
+.gui-menu h2{font-size:16px;color:#e5c57e;font-weight:400;margin:12px 0 8px}
+.gui-menu h2:first-child{margin-top:0}
+.menu-stats{display:grid;grid-template-columns:1fr 1fr;gap:6px}
+.menu-stats>div{border:1px solid #5b4634;padding:5px 8px;background:#2e251c;font-size:14px}
+.menu-stats strong{font-weight:400;color:#fff2d3}
+.menu-icon-grid{display:flex;flex-wrap:wrap;gap:8px;min-height:36px}
+.menu-icon{width:64px;height:68px;padding:6px;flex:0 0 64px}
+.menu-icon .icon-value{font-size:16px;line-height:18px}
+.menu-icon-grid p{margin:0;color:#bcae99}
+.menu-details{border:2px solid #70583f;background:#17130f;padding:10px;margin-top:12px;min-height:76px;font-size:14px}
+.menu-details strong{font-weight:400;color:#f7d98b}
+.menu-details p{margin:4px 0 0}
+.menu-future{display:flex;gap:12px;margin:16px 0}
+.menu-future button{width:50%;padding:8px;opacity:.45;cursor:default}
+.menu-extra{border-top:1px solid #70583f;padding-top:10px;font-size:14px}
+.menu-extra summary{cursor:pointer;font-size:14px;color:#bcae99}
+.menu-extra .upgradeItem{font-size:14px}
+.menu-extra #log{font-size:12px;max-height:180px;margin-top:12px}
+.gui-tooltip{position:fixed;z-index:140;max-width:min(280px,calc(100vw - 32px));padding:10px 12px;background:#17130f;color:#fff1d1;border:2px solid #ad915d;box-shadow:3px 3px 0 #090706;pointer-events:none;font-family:GuiDot,monospace;font-size:14px}
+.gui-tooltip strong{font-weight:400;color:#f8d78b}
+.gui-tooltip p{margin:4px 0 0}
+#itemOverlay .modal{font-family:GuiDot,monospace}
+@media(max-width:520px){.game-hud{padding:8px;gap:6px}.run-stats{gap:6px}.run-stats .meter-number{gap:1px}.menu-stats{grid-template-columns:1fr}.choices{grid-template-columns:1fr}.choice{min-height:0}.choice-icon{float:left;margin:0 10px 0 0;width:32px;height:32px}.choiceTitle{text-align:left}.menu-scroll{padding:8px}.gui-dialog{padding:8px}}

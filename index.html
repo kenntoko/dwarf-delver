@@ -1,78 +1,67 @@
 <!DOCTYPE html>
 <html lang="ja">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Dwarf Delver Pre-release</title>
-  <link rel="stylesheet" href="./css/styles.css?v=loot-flight-1" />
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Dwarf Delver Pre-release</title>
+<link rel="stylesheet" href="./css/styles.css?v=game-gui-1">
 </head>
 <body>
-  <div id="app">
-    <div id="leftCol">
-      <div class="panel">
-        <div class="topline">
-          <div>
-            <strong>Dwarf Delver Pre-release</strong>
-            <div class="hint">左クリック: 採掘 / 右クリック: 危険看板 / 数字をダブルクリック: 周囲を一括採掘（旗数一致時） / Nキー: 次階層へ / Esc: アイテム解除</div>
+<main id="app">
+  <div id="boardWrap" aria-label="Dwarf Delver ゲーム画面">
+    <header class="game-hud" id="gameHud">
+      <div class="floor-row"><div id="phasePill" class="meter-number floor-readout" aria-label="B1F"></div>
+        <button id="descendBtn" hidden disabled>B2Fに降りる</button></div>
+      <div class="pixel-meter" id="hpMeter"><div class="meter-track hp-track"><div id="hpBar" class="meter-art hpFill"></div><span id="hpText" class="meter-number" aria-label="HP:100/100"></span></div></div>
+      <div class="pixel-meter"><div class="meter-track xp-track"><div id="xpBar" class="meter-art xpFill"></div><span id="xpText" class="meter-number" aria-label="EXP:NEXT→100"></span></div></div>
+      <div class="run-stats"><div id="levelText" class="meter-number stat-readout" aria-label="Lv.1"></div>
+        <div id="timeText" class="meter-number stat-readout" aria-label="TIME:00:00"></div>
+        <div id="scoreText" class="meter-number stat-readout" aria-label="スコア（表示のみ）"></div></div>
+      <div class="inventory-row">
+        <div id="upgradesBox" class="passive-dock" role="group" aria-label="所持パッシブ"></div>
+        <div id="inventoryDock" class="inventory-dock" role="group" aria-label="所持アイテム"></div>
+      </div>
+    </header>
+    <div id="playfield"><canvas id="gameCanvas" width="1200" height="864"></canvas></div>
+    <footer class="game-footer"><button id="menuButton" type="button" aria-haspopup="dialog">MENU</button></footer>
+    <div id="overlay"></div><div id="itemOverlay"></div><div id="messageBanner"></div><div id="exitDialog"></div>
+    <div id="lootDialog" class="item-dialog-layer"></div><div id="itemConfirmDialog" class="item-dialog-layer"></div>
+    <div id="menuDialog" class="gui-dialog">
+      <section class="gui-menu" role="dialog" aria-modal="true" aria-labelledby="menuTitle">
+        <div class="menu-heading"><h1 id="menuTitle">MENU</h1><button id="menuClose" type="button">閉じる</button></div>
+        <div class="menu-scroll">
+          <h2>ステータス</h2>
+          <div class="menu-stats">
+            <div>階層 <strong id="menuFloor"></strong></div><div>Lv <strong id="menuLevel"></strong></div>
+            <div>HP <strong id="menuHp"></strong></div><div>次のLvまで <strong id="menuXp"></strong></div>
+            <div>防御 <strong id="defText"></strong></div><div>精霊 <strong id="dwarfText"></strong></div>
+            <div>出現間隔 <strong id="spawnText"></strong></div><div>タイム <strong id="menuTime"></strong></div>
           </div>
-          <div id="phasePill" class="pill">B1F</div>
+          <h2>所持パッシブ</h2><div id="menuPassives" class="menu-icon-grid"></div>
+          <h2>アイテム</h2><div id="menuItems" class="menu-icon-grid"></div>
+          <div id="menuDetails" class="menu-details" aria-live="polite">アイコンにカーソルを合わせると効果を表示</div>
+          <div class="menu-future"><button disabled>設定</button><button disabled>諦める</button></div>
+          <details class="menu-extra"><summary>操作・フロア情報・ログ</summary>
+            <p>Dwarf Delver Pre-release</p>
+            <p>左クリック：採掘／宝箱開封<br>右クリック：危険看板<br>数字をダブルクリック：周囲を一括採掘（旗数一致時）<br>N：次階層へ／Esc：閉じる・キャンセル</p>
+            <p id="statusText"></p><div id="floorInfo"></div><div id="log"></div>
+          </details>
         </div>
-        <div id="statusText" class="hint">入口から洞窟を掘り進めて出口を探そう～</div>
-      </div>
-      <div class="panel top-vitals" aria-label="主人公のHPと経験値">
-        <div class="pixel-meter" id="hpMeter"><div class="meter-track hp-track"><div id="hpBar" class="meter-art hpFill"></div><span id="hpText" class="meter-number" aria-label="HP:100/100">HP:100/100</span></div></div>
-        <div class="pixel-meter"><div class="meter-track xp-track"><div id="xpBar" class="meter-art xpFill"></div><span id="xpText" class="meter-number" aria-label="EXP:NEXT→100">EXP:NEXT→100</span></div></div>
-        <div id="levelText" class="meter-number level-readout" aria-label="Lv.1">Lv.1</div>
-      </div>
-      <div id="boardWrap">
-        <div id="inventoryDock" role="group" aria-label="所持アイテム"></div>
-        <canvas id="gameCanvas" width="1200" height="864"></canvas>
-        <div id="overlay"></div>
-        <div id="itemOverlay"></div>
-        <div id="messageBanner"></div>
-        <div id="exitDialog"></div>
-      </div>
-    </div>
-
-    <div id="rightCol">
-      <div class="panel">
-        <h2>主人公</h2>
-        <div class="miniGrid">
-          <div class="upgradeItem">防御 <strong id="defText">0%</strong></div>
-          <div class="upgradeItem">精霊 <strong id="dwarfText">1</strong></div>
-          <div class="upgradeItem">出現間隔 <strong id="spawnText">9.00s</strong></div>
-        </div>
-        <button id="descendBtn" hidden disabled>B2Fに降りる</button>
-      </div>
-
-      <div class="panel">
-        <h2>能力強化</h2>
-        <div id="upgradesBox" class="miniGrid"></div>
-      </div>
-
-      <div class="panel">
-        <h2>フロア情報</h2>
-        <div id="floorInfo"></div>
-      </div>
-
-      <div class="panel">
-        <h2>ログ</h2>
-        <div id="log"></div>
-      </div>
+      </section>
     </div>
   </div>
-
-  <div id="lootDialog" class="item-dialog-layer"></div>
-  <div id="itemConfirmDialog" class="item-dialog-layer"></div>
+</main>
+<div id="iconTooltip" class="gui-tooltip" role="tooltip" hidden></div>
   <script src="./js/config-chests-v1.js"></script>
   <script src="./js/utils.js"></script>
   <script src="./js/data.js"></script>
   <script src="./js/assets-chests-v1.js?v=chest-open-1"></script>
   <script src="./js/state.js"></script>
   <script src="./js/board.js?v=chest-open-1"></script>
-  <script src="./js/systems-lootflight-v1.js?v=loot-flight-1"></script>
-  <script src="./js/ui-lootflight-v1.js?v=loot-flight-1"></script>
+  <script src="./js/systems-gui-v1.js?v=game-gui-1"></script>
+  <script src="./js/ui-gui-v1.js?v=game-gui-1"></script>
   <script src="./js/render-lootflight-v1.js?v=loot-flight-1"></script>
-  <script src="./js/main-chests-v1.js?v=chest-open-1"></script>
+  <script src="./js/main-gui-v1.js?v=game-gui-1"></script>
+
 </body>
 </html>

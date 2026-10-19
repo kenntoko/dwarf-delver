@@ -4,6 +4,15 @@ DD.ui = {
     const S = DD.state;
     S.dom = {
       canvas: document.getElementById('gameCanvas'),
+      menuButton: document.getElementById('menuButton'),
+      menuDialog: document.getElementById('menuDialog'),
+      menuClose: document.getElementById('menuClose'),
+      menuPassives: document.getElementById('menuPassives'),
+      menuItems: document.getElementById('menuItems'),
+      menuDetails: document.getElementById('menuDetails'),
+      iconTooltip: document.getElementById('iconTooltip'),
+      timeText: document.getElementById('timeText'),
+      scoreText: document.getElementById('scoreText'),
       inventoryDock: document.getElementById('inventoryDock'),
       lootDialog: document.getElementById('lootDialog'),
       itemConfirmDialog: document.getElementById('itemConfirmDialog'),
@@ -30,12 +39,45 @@ DD.ui = {
     };
     S.canvas = S.dom.canvas;
     S.ctx = S.canvas.getContext('2d');
+    const fitGui = () => {
+      const hud = document.getElementById('gameHud').getBoundingClientRect().height;
+      const footer = document.querySelector('.game-footer').getBoundingClientRect().height;
+      document.getElementById('app').style.setProperty('--gui-chrome', (hud + footer + 20) + 'px');
+    };
+    if (typeof ResizeObserver !== 'undefined') {
+      const observer = new ResizeObserver(fitGui);
+      observer.observe(document.getElementById('gameHud'));
+      observer.observe(document.querySelector('.game-footer'));
+    }
+    window.addEventListener('resize', fitGui);
+    requestAnimationFrame(fitGui);
+    S.dom.menuButton.addEventListener('click', () => this.openMenu());
+    S.dom.menuClose.addEventListener('click', () => this.closeMenu());
+    S.dom.menuButton.setAttribute('aria-expanded', 'false');
+    this.bindInspectSurface(S.dom.upgradesBox, false);
+    this.bindInspectSurface(S.dom.menuPassives, true);
+    this.bindInspectSurface(S.dom.menuItems, true);
+    const layoutChanged = () => {
+      this.hideGuiTooltip();
+      if (S.activeChest) S.activeChest.flightTarget = null;
+    };
+    window.addEventListener('resize', layoutChanged);
+    window.addEventListener('scroll', layoutChanged, true);
     S.dom.descendBtn.addEventListener('click', () => DD.systems.nextFloor());
     S.dom.inventoryDock.addEventListener('click', e => {
       const button = e.target.closest('button[data-unit]');
       if (button) this.confirmItem(Number(button.dataset.unit));
     });
     window.addEventListener('keydown', (e) => {
+      if (S.pauseReason === 'menu') {
+        if (e.key === 'Escape') { e.preventDefault(); this.closeMenu(); }
+        if (e.key === 'Tab') {
+          const buttons = [...S.dom.menuDialog.querySelectorAll('button:not(:disabled),summary')];
+          const i = buttons.indexOf(document.activeElement); e.preventDefault();
+          if (buttons.length) buttons[(i + (e.shiftKey ? -1 : 1) + buttons.length) % buttons.length].focus();
+        }
+        return;
+      }
       if (['chest', 'item-confirm'].includes(S.pauseReason)) {
         if (e.key === 'Escape' && S.pauseReason === 'item-confirm') this.cancelItemConfirm();
         if (e.key === 'Tab') {
@@ -70,7 +112,7 @@ DD.ui = {
     const signature = keys.map(key => key + ':' + S.inventory[key]).join(',') + ':' + disabled;
     if (dock.dataset.signature === signature) return;
     dock.dataset.signature = signature;
-    dock.hidden = keys.length === 0;
+    dock.hidden = false;
     dock.innerHTML = keys.map(key => {
       const unit = (S.itemUnits || []).find(u => u.key === key);
       return '<button type="button" class="item-slot" data-unit="' + (unit ? unit.id : '') +
@@ -96,18 +138,26 @@ DD.ui = {
     this.updateChestOpening(0); this.refreshHud();
   },
   chestFlightTarget(key) {
-    const S = DD.state;
+    const S = DD.state, dock = S.dom.inventoryDock;
     const unit = (S.itemUnits || []).find(u => u.key === key);
-    const existing = unit && S.dom.inventoryDock.querySelector('button[data-unit="' + unit.id + '"] img');
+    const existing = unit && dock.querySelector('button[data-unit="' + unit.id + '"] img');
     if (existing) {
       const r = existing.getBoundingClientRect();
       return { x: r.left + r.width / 2, y: r.top + r.height / 2 };
     }
     const order = ['reinforce', 'survey', 'clairvoyance', 'heal'];
     const keys = order.filter(k => S.inventory[k] > 0 || k === key);
-    const index = keys.indexOf(key), r = S.canvas.getBoundingClientRect();
-    // 40px slots, 4px gaps, and the dock's 8px right / 6px top inset.
-    return { x: r.right - 8 - 20 - (keys.length - 1 - index) * 44, y: r.top + 6 + 20 };
+    const r = dock.getBoundingClientRect(), measure = dock.cloneNode(false);
+    measure.id = ''; measure.className = 'inventory-dock';
+    measure.removeAttribute('role'); measure.removeAttribute('aria-label');
+    measure.style.cssText = 'position:fixed;left:' + r.left + 'px;top:' + r.top +
+      'px;width:' + r.width + 'px;visibility:hidden;pointer-events:none;z-index:-1';
+    measure.innerHTML = keys.map(k => '<button class="item-slot"><img src="' + this.itemIcon(k) +
+      '" width="32" height="32" alt=""></button>').join('');
+    document.body.appendChild(measure);
+    const target = measure.children[keys.indexOf(key)].querySelector('img').getBoundingClientRect();
+    const point = { x: target.left + target.width / 2, y: target.top + target.height / 2 };
+    measure.remove(); return point;
   },
   chestFlightPosition(age, source, target) {
     const rise = 24;
@@ -135,7 +185,7 @@ DD.ui = {
       const center = DD.utils.tileCenter(event.x, event.y);
       const source = { x: r.left + center.x * r.width / S.canvas.width,
         y: r.top + (center.y - 7) * r.height / S.canvas.height };
-      const pos = this.chestFlightPosition(event.age, source, this.chestFlightTarget(event.key));
+      const pos = this.chestFlightPosition(event.age, source, event.flightTarget || (event.flightTarget = this.chestFlightTarget(event.key)));
       icon.style.left = pos.x + 'px'; icon.style.top = pos.y + 'px';
     }
     if (event.age >= 1.25 && !event.rewardGranted) {
@@ -201,11 +251,103 @@ DD.ui = {
     this.refreshHud();
   },
 
+
+  upgradeIcon(key) { return './assets/upgrade_' + key + '.png'; },
+  formatTime(seconds) {
+    const s = Math.max(0, Math.floor(seconds || 0));
+    return String(Math.floor(s / 60)).padStart(2, '0') + ':' + String(s % 60).padStart(2, '0');
+  },
+  inspectButton(type, key, count, menu) {
+    const def = type === 'upgrade' ? DD.data.upgradeDefs[key] : DD.data.itemDefs[key];
+    const icon = type === 'upgrade' ? this.upgradeIcon(key) : this.itemIcon(key);
+    const value = type === 'upgrade' ? 'Lv.' + count : String(count);
+    const label = def.name + (type === 'upgrade' ? ' Lv.' + count : ' 所持' + count + '個');
+    return '<button type="button" class="inspect-icon ' + (menu ? 'menu-icon' : 'hud-passive') +
+      '" data-inspect-type="' + type + '" data-inspect-key="' + key + '" aria-label="' + label +
+      '"><img src="' + icon + '" width="32" height="32" alt=""><span class="icon-value">' + value + '</span></button>';
+  },
+  renderPassiveIcons() {
+    const S = DD.state, keys = Object.keys(DD.data.upgradeDefs).filter(k => S.player.upgrades[k] > 0);
+    const signature = keys.map(k => k + ':' + S.player.upgrades[k]).join(',');
+    if (S.dom.upgradesBox.dataset.signature !== signature) {
+      S.dom.upgradesBox.dataset.signature = signature;
+      S.dom.upgradesBox.innerHTML = keys.map(k => this.inspectButton('upgrade', k, S.player.upgrades[k], false)).join('');
+    }
+    if (S.dom.menuPassives.dataset.signature !== signature) {
+      S.dom.menuPassives.dataset.signature = signature;
+      S.dom.menuPassives.innerHTML = keys.length ? keys.map(k => this.inspectButton('upgrade', k, S.player.upgrades[k], true)).join('') : '<p>なし</p>';
+    }
+    const items = ['reinforce','survey','clairvoyance','heal'].filter(k => S.inventory[k] > 0);
+    const itemSignature = items.map(k => k + ':' + S.inventory[k]).join(',');
+    if (S.dom.menuItems.dataset.signature !== itemSignature) {
+      S.dom.menuItems.dataset.signature = itemSignature;
+      S.dom.menuItems.innerHTML = items.length ? items.map(k => this.inspectButton('item', k, S.inventory[k], true)).join('') : '<p>なし</p>';
+    }
+  },
+  inspectDescription(type, key) {
+    const S = DD.state;
+    if (type === 'upgrade') {
+      const def = DD.data.upgradeDefs[key], lv = S.player.upgrades[key];
+      return { title: def.name + ' Lv.' + lv, text: def.getDesc(lv) };
+    }
+    const def = DD.data.itemDefs[key];
+    return { title: def.name + ' ×' + S.inventory[key], text: this.itemTerms(key) };
+  },
+  bindInspectSurface(surface, inMenu) {
+    const show = e => {
+      const button = e.target.closest('button[data-inspect-key]');
+      if (!button || !surface.contains(button)) return;
+      const info = this.inspectDescription(button.dataset.inspectType, button.dataset.inspectKey);
+      if (inMenu) DD.state.dom.menuDetails.innerHTML = '<strong>' + info.title + '</strong><p>' + info.text + '</p>';
+      const box = DD.state.dom.iconTooltip;
+      box.innerHTML = '<strong>' + info.title + '</strong><p>' + info.text + '</p>';
+      box.hidden = false;
+      const r = button.getBoundingClientRect(), frame = document.getElementById('boardWrap').getBoundingClientRect();
+      const width = box.offsetWidth, height = box.offsetHeight;
+      box.style.left = Math.max(frame.left + 8, Math.min(frame.right - width - 8, r.left)) + 'px';
+      const below = r.bottom + 8;
+      box.style.top = Math.max(frame.top + 8, below + height < frame.bottom - 8 ? below : r.top - height - 8) + 'px';
+    };
+    surface.addEventListener('pointerover', show); surface.addEventListener('focusin', show);
+    surface.addEventListener('pointerleave', () => this.hideGuiTooltip());
+    surface.addEventListener('focusout', () => this.hideGuiTooltip());
+    surface.addEventListener('click', e => {
+      const button = e.target.closest('button[data-inspect-key]');
+      if (!button) return;
+      if (!inMenu) {
+        this.openMenu();
+        const info = this.inspectDescription(button.dataset.inspectType, button.dataset.inspectKey);
+        DD.state.dom.menuDetails.innerHTML = '<strong>' + info.title + '</strong><p>' + info.text + '</p>';
+      } else show(e);
+    });
+  },
+  hideGuiTooltip() { if (DD.state.dom && DD.state.dom.iconTooltip) DD.state.dom.iconTooltip.hidden = true; },
+  openMenu() {
+    const S = DD.state;
+    if (S.paused || S.mode === 'lost' || S.mode === 'won') return;
+    this.hideGuiTooltip();
+    S.paused = true; S.pauseReason = 'menu';
+    S.dom.menuDetails.textContent = 'アイコンにカーソルを合わせると効果を表示';
+    S.dom.menuDialog.classList.add('show');
+    S.dom.menuButton.setAttribute('aria-expanded', 'true');
+    this.refreshHud(); S.dom.menuClose.focus();
+  },
+  closeMenu() {
+    const S = DD.state;
+    if (S.pauseReason !== 'menu') return;
+    S.dom.menuDialog.classList.remove('show'); S.dom.menuButton.setAttribute('aria-expanded', 'false');
+    S.paused = false; S.pauseReason = ''; S.lastTimeStamp = 0;
+    this.hideGuiTooltip(); this.refreshHud(); S.dom.menuButton.focus(); this.resumePendingDialogs();
+  },
+
   renderMeterValue(element, value, label) {
     if (element.dataset.value === value) return;
     element.dataset.value = value;
     element.setAttribute('aria-label', (label ? label + ' ' : '') + value);
     const glyphs = {
+      'F':['111','100','110','100','100'],'I':['111','010','010','010','111'],
+      'M':['10001','11011','10101','10001','10001'],'C':['111','100','100','100','111'],
+      'R':['110','101','110','101','101'],
       '0':['111','101','101','101','111'],'1':['010','110','010','010','111'],
       '2':['111','001','111','100','111'],'3':['111','001','111','001','111'],
       '4':['101','101','111','001','001'],'5':['111','100','111','001','111'],
@@ -250,16 +392,21 @@ DD.ui = {
     D.defText.textContent = `${S.player.upgrades.defense * 8}%`;
     D.dwarfText.textContent = S.player.upgrades.summon;
     D.spawnText.textContent = `${DD.systems.currentSpawnInterval().toFixed(2)}s`;
-    D.phasePill.textContent = S.mode === 'boss' ? 'BOSS' : `B${S.floor}F`;
+    this.renderMeterValue(D.phasePill, `B${S.floor}F`, '階層');
+    this.renderMeterValue(D.timeText, `TIME:${this.formatTime(S.runTime)}`, '');
+    this.renderMeterValue(D.scoreText, 'SCORE:0', 'スコア（表示のみ）');
+    D.menuButton.disabled = S.paused || S.mode === 'lost' || S.mode === 'won';
+    document.getElementById('menuFloor').textContent = `B${S.floor}F`;
+    document.getElementById('menuLevel').textContent = String(S.player.level);
+    document.getElementById('menuHp').textContent = `${Math.ceil(S.player.hp)}/${S.player.maxHp}`;
+    document.getElementById('menuXp').textContent = String(Math.max(0, S.player.nextXp - S.player.xp));
+    document.getElementById('menuTime').textContent = this.formatTime(S.runTime);
     D.descendBtn.hidden = !(S.exitDeferred && S.readyToDescend && S.mode === 'dungeon');
     D.descendBtn.disabled = !S.readyToDescend || S.mode !== 'dungeon' || S.paused;
     D.descendBtn.textContent = `B${S.floor + 1}Fに降りる`;
     D.descendBtn.classList.toggle('exit-ready', !D.descendBtn.hidden);
 
-    D.upgradesBox.innerHTML = Object.keys(DD.data.upgradeDefs).map(k => {
-      const def = DD.data.upgradeDefs[k];
-      return `<div class="upgradeItem"><strong>${def.name}</strong><br>Lv ${S.player.upgrades[k]} / ${def.max}</div>`;
-    }).join('');
+    this.renderPassiveIcons();
 
     this.renderInventory();
 
@@ -298,7 +445,7 @@ DD.ui = {
     S.paused = true;
     S.pauseReason = 'levelup';
     S.dom.overlay.innerHTML = `<div class="modal"><h2>レベルアップ</h2><div id="levelBonusCount" class="meter-number level-readout"></div><p class="hint">1つ選んでね～</p><div class="choices">${choices.map(k => `
-      <div class="choice" data-upg="${k}"><div class="choiceTitle">${DD.data.upgradeDefs[k].name}</div>
+      <div class="choice" data-upg="${k}"><div class="choiceTitle"><img class="choice-icon" src="${this.upgradeIcon(k)}" width="48" height="48" alt="">${DD.data.upgradeDefs[k].name}</div>
       <div>${DD.data.upgradeDefs[k].getDesc(S.player.upgrades[k])}</div><small>最大Lv${DD.data.upgradeDefs[k].max}</small></div>`).join('')}</div></div>`;
     S.dom.overlay.classList.add('show');
     this.renderMeterValue(document.getElementById('levelBonusCount'), `BONUS:${S.pendingLevelBonuses}`, '残り選択回数');
@@ -382,6 +529,8 @@ DD.ui = {
   },
   showBanner(title, html) {
     const S = DD.state;
+    if (S.dom.menuDialog) S.dom.menuDialog.classList.remove('show');
+    this.hideGuiTooltip();
     for (const el of [S.dom.lootDialog, S.dom.itemConfirmDialog, S.dom.itemOverlay, S.dom.overlay]) {
       el.classList.remove('show'); el.innerHTML = '';
     }
