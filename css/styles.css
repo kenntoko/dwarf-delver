@@ -221,7 +221,7 @@ body{line-height:1.5}
 .floor-readout{position:static;transform:none;left:auto;top:auto;height:20px;gap:4px}
 .floor-readout svg{width:12px!important;height:20px}
 #descendBtn{position:absolute;right:0;top:0;margin:0;padding:1px 8px;width:auto;border:2px solid #b98c42;background:#4d391f;color:#fff0c8;font-size:12px}
-.run-stats{display:flex;align-items:center;justify-content:space-between;gap:12px;min-height:14px}
+.run-stats{display:flex;align-items:center;justify-content:flex-start;gap:12px;min-height:14px}
 .stat-readout{position:static;transform:none;left:auto;top:auto;margin:0;height:14px}
 .inventory-row{display:flex;align-items:flex-start;justify-content:space-between;gap:12px;min-height:52px}
 .passive-dock{flex:1;display:flex;flex-wrap:wrap;gap:4px;min-width:0}
