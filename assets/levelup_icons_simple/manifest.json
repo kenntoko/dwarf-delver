@@ -30,7 +30,7 @@
     "name": "奴隷調達",
     "previousName": "追加召喚",
     "effect": "ドワーフ精霊 +1体",
-    "file": "summon.png",
+    "file": "summon_soul_plus.png",
     "sheet": {
       "x": 64,
       "y": 0,

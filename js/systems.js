@@ -677,6 +677,8 @@ DD.systems = {
     const interval = Math.max(1.0, 2.0 - S.player.upgrades.castSpeed * 0.2);
     const origin = S.playerPos();
     S.dwarfActors.forEach((dwarf, i) => {
+      dwarf.animTime = (dwarf.animTime || 0) + dt;
+      dwarf.attackAge = Math.min(999, (dwarf.attackAge ?? 999) + dt);
       dwarf.cd -= dt;
       if (dwarf.cd > 0) return;
       let best = null, bestD = Infinity;
@@ -687,6 +689,7 @@ DD.systems = {
       if (!best) return;
       const angle = (Math.PI * 2 * i) / Math.max(1, S.dwarfActors.length);
       S.projectiles.push({ x: origin.x + Math.cos(angle) * 24, y: origin.y + Math.sin(angle) * 24, target: best, damage: atk });
+      dwarf.attackAge = 0;
       dwarf.cd = interval;
     });
   },

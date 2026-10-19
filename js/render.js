@@ -299,9 +299,21 @@ DD.render = {
     for (let i = 0; i < count; i++) {
       const ang = (Math.PI * 2 * i) / count + performance.now() * 0.0005;
       const dx = Math.cos(ang) * 28, dy = Math.sin(ang) * 28;
-      this.drawImageOrFallback('dwarf', () => {
-        ctx.fillStyle = '#8ecae6'; ctx.beginPath(); ctx.arc(p.x + dx, p.y + dy, 7, 0, Math.PI * 2); ctx.fill();
-      }, p.x + dx - 8, p.y + dy - 8, 16, 16);
+      const dwarf = DD.state.dwarfActors[i];
+      const attack = !!dwarf && dwarf.attackAge < 0.48;
+      const sheet = DD.assets.get(attack ? 'dwarf_soul_attack' : 'dwarf_soul_idle');
+      const frame = attack ? Math.min(5, Math.floor(dwarf.attackAge / 0.08)) :
+        (Math.floor((dwarf?.animTime || 0) / 0.18) + i) % 4;
+      if (sheet && sheet.complete && sheet.naturalWidth >= (attack ? 192 : 128) && sheet.naturalHeight >= 32) {
+        ctx.save();
+        ctx.imageSmoothingEnabled = false;
+        ctx.drawImage(sheet, frame * 32, 0, 32, 32, Math.round(p.x + dx - 16), Math.round(p.y + dy - 16), 32, 32);
+        ctx.restore();
+      } else {
+        this.drawImageOrFallback('dwarf', () => {
+          ctx.fillStyle = '#8ecae6'; ctx.beginPath(); ctx.arc(p.x + dx, p.y + dy, 7, 0, Math.PI * 2); ctx.fill();
+        }, p.x + dx - 8, p.y + dy - 8, 16, 16);
+      }
     }
   },
   drawEnemies() {
