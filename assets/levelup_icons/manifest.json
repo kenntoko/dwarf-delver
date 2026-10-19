@@ -1,0 +1,93 @@
+[
+  {
+    "key": "projectilePower",
+    "name": "上質な魔力",
+    "previousName": "魔法弾強化",
+    "effect": "魔法弾の攻撃力 +1",
+    "file": "projectilePower.png",
+    "sheet": {
+      "x": 0,
+      "y": 0,
+      "width": 32,
+      "height": 32
+    }
+  },
+  {
+    "key": "castSpeed",
+    "name": "高速詠唱",
+    "previousName": "高速詠唱",
+    "effect": "発射間隔 -0.2秒",
+    "file": "castSpeed.png",
+    "sheet": {
+      "x": 32,
+      "y": 0,
+      "width": 32,
+      "height": 32
+    }
+  },
+  {
+    "key": "summon",
+    "name": "奴隷調達",
+    "previousName": "追加召喚",
+    "effect": "ドワーフ精霊 +1体",
+    "file": "summon.png",
+    "sheet": {
+      "x": 64,
+      "y": 0,
+      "width": 32,
+      "height": 32
+    }
+  },
+  {
+    "key": "vitality",
+    "name": "ご褒美スイーツ",
+    "previousName": "生命強化",
+    "effect": "最大HP +20、HP20回復",
+    "file": "vitality.png",
+    "sheet": {
+      "x": 96,
+      "y": 0,
+      "width": 32,
+      "height": 32
+    }
+  },
+  {
+    "key": "scoutEye",
+    "name": "鉱脈調査",
+    "previousName": "探索の眼",
+    "effect": "安全マスを自動探知",
+    "file": "scoutEye.png",
+    "sheet": {
+      "x": 128,
+      "y": 0,
+      "width": 32,
+      "height": 32
+    }
+  },
+  {
+    "key": "xpBoost",
+    "name": "英才教育",
+    "previousName": "経験値強化",
+    "effect": "獲得XP +10%",
+    "file": "xpBoost.png",
+    "sheet": {
+      "x": 160,
+      "y": 0,
+      "width": 32,
+      "height": 32
+    }
+  },
+  {
+    "key": "defense",
+    "name": "素敵なお召し物",
+    "previousName": "防御強化",
+    "effect": "被ダメージ -8%",
+    "file": "defense.png",
+    "sheet": {
+      "x": 192,
+      "y": 0,
+      "width": 32,
+      "height": 32
+    }
+  }
+]

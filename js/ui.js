@@ -252,7 +252,7 @@ DD.ui = {
   },
 
 
-  upgradeIcon(key) { return './assets/upgrade_' + key + '.png'; },
+  upgradeIcon(key) { return './assets/levelup_icons/' + key + '.png'; },
   formatTime(seconds) {
     const s = Math.max(0, Math.floor(seconds || 0));
     return String(Math.floor(s / 60)).padStart(2, '0') + ':' + String(s % 60).padStart(2, '0');
@@ -445,7 +445,7 @@ DD.ui = {
     S.paused = true;
     S.pauseReason = 'levelup';
     S.dom.overlay.innerHTML = `<div class="modal"><h2>レベルアップ</h2><div id="levelBonusCount" class="meter-number level-readout"></div><p class="hint">1つ選んでね～</p><div class="choices">${choices.map(k => `
-      <div class="choice" data-upg="${k}"><div class="choiceTitle"><img class="choice-icon" src="${this.upgradeIcon(k)}" width="48" height="48" alt="">${DD.data.upgradeDefs[k].name}</div>
+      <div class="choice" data-upg="${k}"><div class="choiceTitle"><img class="choice-icon" src="${this.upgradeIcon(k)}" width="64" height="64" alt="">${DD.data.upgradeDefs[k].name}</div>
       <div>${DD.data.upgradeDefs[k].getDesc(S.player.upgrades[k])}</div><small>最大Lv${DD.data.upgradeDefs[k].max}</small></div>`).join('')}</div></div>`;
     S.dom.overlay.classList.add('show');
     this.renderMeterValue(document.getElementById('levelBonusCount'), `BONUS:${S.pendingLevelBonuses}`, '残り選択回数');

@@ -211,7 +211,7 @@ canvas {
 .chest-flying-item{position:fixed;width:32px;height:32px;image-rendering:pixelated;transform:translate(-50%,-50%);pointer-events:none}
 
 /* Game GUI: every control lives inside the game frame. */
-@font-face{font-family:GuiDot;src:url('../assets/gui-dot.ttf') format('truetype');font-display:block}
+@font-face{font-family:GuiDot;src:url('../assets/levelup-ui-dot.ttf') format('truetype');font-display:block}
 body,button,summary{font-family:GuiDot,monospace;font-size:16px}
 body{line-height:1.5}
 #app{display:block;width:min(calc(100vw - 16px),max(320px,calc((100dvh - var(--gui-chrome,248px))*1.388889)));max-width:1200px;padding:0;margin:8px auto}
@@ -275,3 +275,7 @@ body{line-height:1.5}
 .gui-tooltip p{margin:4px 0 0}
 #itemOverlay .modal{font-family:GuiDot,monospace}
 @media(max-width:520px){.game-hud{padding:8px;gap:6px}.run-stats{gap:6px}.run-stats .meter-number{gap:1px}.menu-stats{grid-template-columns:1fr}.choices{grid-template-columns:1fr}.choice{min-height:0}.choice-icon{float:left;margin:0 10px 0 0;width:32px;height:32px}.choiceTitle{text-align:left}.menu-scroll{padding:8px}.gui-dialog{padding:8px}}
+
+/* LvUp assets: 32px source, integer 2x display; mobile uses native 32px. */
+.choice-icon{width:64px;height:64px;image-rendering:pixelated}
+@media(max-width:520px){.choice-icon{width:32px;height:32px}}

@@ -12,13 +12,13 @@ DD.data = {
     heal: { name: '回復薬', target: false, desc: 'HPを30回復' }
   },
   upgradeDefs: {
-    projectilePower: { name: '魔法弾強化', max: 5, getDesc(lv){ return `魔法弾の攻撃力 +1（現在Lv${lv}）`; } },
+    projectilePower: { name: '上質な魔力', max: 5, getDesc(lv){ return `魔法弾の攻撃力 +1（現在Lv${lv}）`; } },
     castSpeed: { name: '高速詠唱', max: 5, getDesc(lv){ return `魔法弾の発射間隔 -0.2秒（現在Lv${lv}）`; } },
-    summon: { name: '追加召喚', max: 5, getDesc(lv){ return `ドワーフ精霊 +1体（現在Lv${lv}）`; } },
-    vitality: { name: '生命強化', max: 5, getDesc(lv){ return `最大HP +20、HP20回復（現在Lv${lv}）`; } },
-    scoutEye: { name: '探索の眼', max: 5, getDesc(lv){ return `安全マスを自動探知（現在Lv${lv}）`; } },
-    xpBoost: { name: '経験値強化', max: 5, getDesc(lv){ return `獲得XP +10%（現在Lv${lv}）`; } },
-    defense: { name: '防御強化', max: 5, getDesc(lv){ return `被ダメージ -8%（現在Lv${lv}）`; } }
+    summon: { name: '奴隷調達', max: 5, getDesc(lv){ return `ドワーフ精霊 +1体（現在Lv${lv}）`; } },
+    vitality: { name: 'ご褒美スイーツ', max: 5, getDesc(lv){ return `最大HP +20、HP20回復（現在Lv${lv}）`; } },
+    scoutEye: { name: '鉱脈調査', max: 5, getDesc(lv){ return `安全マスを自動探知（現在Lv${lv}）`; } },
+    xpBoost: { name: '英才教育', max: 5, getDesc(lv){ return `獲得XP +10%（現在Lv${lv}）`; } },
+    defense: { name: '素敵なお召し物', max: 5, getDesc(lv){ return `被ダメージ -8%（現在Lv${lv}）`; } }
   },
   scoutIntervals: [Infinity, 45, 35, 25, 18, 12]
 };

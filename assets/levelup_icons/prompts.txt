@@ -1,0 +1,18 @@
++Generation mode: built-in image_gen, transparent_background=true.
+Final delivery: alpha-preserving crop and nearest-neighbor resize to exact 32x32.
+
+Practical fantasy RPG UI item icon, strict PIXEL ART designed for a 32x32 logical grid. Single centered object or simple compact symbol on genuinely transparent alpha background. Chunky crisp square pixel clusters, limited warm jewel palette, dark purple-black 1-pixel logical outer outline, pale cream highlights, no antialiasing, no gradients, no photographic texture, no 3D render, no scenery, no text, no letters, no labels. Readability at tiny actual 32x32 is paramount; use large simple silhouettes, only a few strong details. Charming lightly comical rich spoiled blonde merchant girl's dungeon game, gold accents, unified classic fantasy inventory icon style. Leave a small transparent margin, full object entirely inside canvas. 
+
+projectilePower: A single dense purple faceted magical orb/gem with a small gold crown-like rim and two strong sparkles. Power and luxurious magic.
+
+castSpeed: A compact open cyan spellbook with three bold horizontal speed streaks behind it, small violet magic spark above. Fast spell casting.
+
+summon: A cute tiny blue glowing dwarf spirit with large white beard and mining helmet, next to a bold green plus-shaped summon sparkle. Additional dwarf worker.
+
+vitality: A luxurious small strawberry layer cake on a gold plate, cream icing, one bright red strawberry. Delicious healing reward sweets.
+
+scoutEye: A large gold-rimmed magnifying glass inspecting a bright cyan crystal ore chunk. Clearly readable exploration surveying symbol.
+
+xpBoost: A red and gold open textbook with a short teaching pointer and one clear gold upward arrow. Elite education and faster learning.
+
+defense: A rich red noble girl dress with ivory collar, big gold bow and short cape shoulders. Strong simple recognizable clothing silhouette.
