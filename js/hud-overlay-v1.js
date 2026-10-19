@@ -1,7 +1,7 @@
 (() => {
 // Reserve a compact in-canvas HUD area above the entrance and player.
-DD.config.boardRect.y=500;
-DD.config.CANVAS_H=1240;
+DD.config.boardRect.y=360;
+DD.config.CANVAS_H=1100;
 const bind=DD.ui.bindDom;
 DD.ui.bindDom=function(){
   bind.call(this);

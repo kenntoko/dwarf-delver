@@ -1,4 +1,4 @@
-#app{width:min(calc(100vw - 16px),max(320px,calc((100dvh - 64px)*.967742)));max-width:1200px}
+#app{width:min(calc(100vw - 16px),max(320px,calc((100dvh - 64px)*1.090909)));max-width:1200px}
 #playfield{position:relative;background:#0e1316}
 #gameHud{position:absolute;left:0;top:0;width:600px;z-index:20;transform-origin:top left;background:transparent;border:0;padding:6px 12px;gap:3px;pointer-events:none}
 #gameHud button,#gameHud .passive-dock,#gameHud .hud-owned-items{pointer-events:auto}
