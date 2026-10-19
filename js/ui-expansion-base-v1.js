@@ -106,7 +106,7 @@ DD.ui = {
 
   renderInventory() {
     const S = DD.state, dock = S.dom.inventoryDock;
-    const order = ['reinforce', 'survey', 'clairvoyance', 'heal'];
+    const order = ['reinforce', 'survey', 'heal'];
     const keys = order.filter(key => S.inventory[key] > 0);
     const disabled = S.paused || S.mode === 'lost' || S.mode === 'won';
     const signature = keys.map(key => key + ':' + S.inventory[key]).join(',') + ':' + disabled;
@@ -145,7 +145,7 @@ DD.ui = {
       const r = existing.getBoundingClientRect();
       return { x: r.left + r.width / 2, y: r.top + r.height / 2 };
     }
-    const order = ['reinforce', 'survey', 'clairvoyance', 'heal'];
+    const order = ['reinforce', 'survey', 'heal'];
     const keys = order.filter(k => S.inventory[k] > 0 || k === key);
     const r = dock.getBoundingClientRect(), measure = dock.cloneNode(false);
     measure.id = ''; measure.className = 'inventory-dock';
@@ -206,7 +206,7 @@ DD.ui = {
     if (key === 'heal') return 'HPを30回復（最大HPまで）。HP満タンでも消費されます。';
     const condition = DD.state.mode === 'boss' ? '未探索マスを選択。' : '開いたマスに隣接する未探索マスを選択。';
     if (key === 'reinforce') return condition + '危険岩盤を安全化。安全マスでも消費されます。';
-    if (key === 'survey') return condition + '周囲8マスにある危険岩盤の数を表示。';
+    if (key === 'survey') return DD.data.itemDefs.survey.desc;
     return condition + '周囲8マスの未探索マスの情報を表示。';
   },
   confirmItem(id) {
@@ -218,7 +218,7 @@ DD.ui = {
     S.paused = true; S.pauseReason = 'item-confirm';
     S.dom.itemConfirmDialog.innerHTML = '<div class="modal pixel-item-ui" role="dialog" aria-modal="true" aria-labelledby="itemTitle">' +
       '<h2 id="itemTitle">' + DD.data.itemDefs[unit.key].name + '</h2><img class="loot-icon" src="' +
-      this.itemIcon(unit.key) + '" alt=""><p>使用条件・効果</p><p>' + this.itemTerms(unit.key) +
+      this.itemIcon(unit.key) + '" alt="">' + (unit.key === 'survey' ? '' : '<p>使用条件・効果</p>') + '<p>' + this.itemTerms(unit.key) +
       '</p><div class="item-actions"><button class="messageButton" id="itemUse">使う</button>' +
       '<button class="messageButton" id="itemCancel">キャンセル</button></div></div>';
     S.dom.itemConfirmDialog.classList.add('show');
@@ -277,7 +277,7 @@ DD.ui = {
       S.dom.menuPassives.dataset.signature = signature;
       S.dom.menuPassives.innerHTML = keys.length ? keys.map(k => this.inspectButton('upgrade', k, S.player.upgrades[k], true)).join('') : '<p>なし</p>';
     }
-    const items = ['reinforce','survey','clairvoyance','heal'].filter(k => S.inventory[k] > 0);
+    const items = ['reinforce','survey','heal'].filter(k => S.inventory[k] > 0);
     const itemSignature = items.map(k => k + ':' + S.inventory[k]).join(',');
     if (S.dom.menuItems.dataset.signature !== itemSignature) {
       S.dom.menuItems.dataset.signature = itemSignature;

@@ -44,5 +44,8 @@ for (const [key,name] of Object.entries(DD.expansion.skillNames)) {
   DD.data.upgradeDefs[key]={name,max:5,getDesc(lv){return DD.expansion.skillDescription(key,lv);}};
   DD.state.player.upgrades[key]=key==='coin'?1:0;
 }
+DD.data.itemDefs.survey.desc='選択した未探索マスの周囲8マスにある危険岩盤へ、危険看板を立てる。';
+delete DD.data.itemDefs.clairvoyance;
+delete DD.state.inventory.clairvoyance;
 DD.state.equipment={};
 DD.state.score=0;

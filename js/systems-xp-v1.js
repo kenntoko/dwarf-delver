@@ -802,19 +802,10 @@ DD.systems = {
       let count = 0;
       DD.utils.neighbors8(x, y).forEach(([nx, ny]) => {
         const nt = board.grid[ny][nx];
-        if (nt.active && nt.isDanger) count++;
+        if (nt.active && !nt.isOpen && nt.isDanger) { nt.flagged = true; count++; }
       });
-      tile.surveyCount = count;
-      this.addLog(`地質調査：周囲8マスの危険岩盤は ${count} 個～`, 'good');
-    }
-    if (itemKey === 'clairvoyance') {
-      S.inventory[itemKey] -= 1;
-      DD.utils.neighbors8(x, y).forEach(([nx, ny]) => {
-        const nt = board.grid[ny][nx];
-        if (!nt.active || nt.isOpen) return;
-        nt.preview = nt.isDanger ? '!' : String(nt.number);
-      });
-      this.addLog('透視の巻物で周囲の地形を見通した～', 'good');
+      tile.surveyCount = null;
+      this.addLog(`地質調査：周囲8マスの危険岩盤 ${count} 個に危険看板を立てた～`, 'good');
     }
     this.consumeItemUnit(itemKey);
     DD.ui.clearItemMode();
