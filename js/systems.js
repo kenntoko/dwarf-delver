@@ -647,22 +647,54 @@ DD.systems = {
     const S = DD.state;
     S.projectiles.forEach(p => {
       if (!p.target || !p.target.alive) { p.dead = true; return; }
+      p.launchX ??= p.x; p.launchY ??= p.y;
+      p.launchAngle ??= Math.atan2(p.target.y - p.y, p.target.x - p.x);
+      const previousAge = p.age || 0;
+      p.age = previousAge + dt;
+      p.trail = p.trail || [];
+      p.trail.push({ x: p.x, y: p.y });
+      if (p.trail.length > 5) p.trail.shift();
+      // A brief, local loop before the user-requested eased homing flight.
+      if (p.age < 0.18) {
+        const t = p.age / 0.18, r = 8 * Math.sin(Math.PI * t);
+        const angle = p.launchAngle + Math.PI * 2 * t;
+        p.x = p.launchX + Math.cos(angle) * r;
+        p.y = p.launchY + Math.sin(angle) * r;
+        p.phase = 'swirl';
+        return;
+      }
+      if (previousAge < 0.18) { p.x = p.launchX; p.y = p.launchY; }
+      p.phase = 'flight';
+      const flightAge = p.age - 0.18;
+      const ease = Math.min(1, flightAge / 0.45);
+      const speed = 100 + 400 * ease * ease;
+      const step = speed * Math.min(dt, flightAge);
       const dx = p.target.x - p.x, dy = p.target.y - p.y;
-      const d = Math.hypot(dx, dy);
-      if (d < 10) {
-        p.target.hp -= p.damage;
+      const distance = Math.hypot(dx, dy);
+      // Check the entire step so accelerated shots cannot overshoot the target.
+      if (distance <= Math.max(10, step)) {
+        const enemy = p.target;
+        const actual = Math.min(Math.max(0, enemy.hp), p.damage);
+        enemy.hp -= p.damage;
+        enemy.hitAge = 0;
+        S.damageNumbers = S.damageNumbers || [];
+        const hits = S.damageNumbers.filter(n => n.kind === 'enemy' && n.targetId === enemy).length;
+        S.damageNumbers.push({
+          kind: 'enemy', targetId: enemy,
+          text: '-' + String(Math.round(actual * 10) / 10),
+          x: enemy.x + (hits % 3 - 1) * 8, y: enemy.y - 28, age: 0
+        });
         p.dead = true;
-        if (p.target.hp <= 0 && p.target.alive) {
-          p.target.alive = false;
-          const def = DD.data.enemyDefs[p.target.type];
+        if (enemy.hp <= 0 && enemy.alive) {
+          enemy.alive = false;
+          const def = DD.data.enemyDefs[enemy.type];
           const xp = Math.round(def.xp * this.currentXpMultiplier());
           this.gainXp(xp);
           this.addLog(`${def.name}を倒した～ (+${xp}XP)`, 'good');
         }
       } else {
-        const speed = 280;
-        p.x += dx / d * speed * dt;
-        p.y += dy / d * speed * dt;
+        p.x += dx / distance * step;
+        p.y += dy / distance * step;
       }
     });
     S.projectiles = S.projectiles.filter(p => !p.dead);
@@ -687,8 +719,8 @@ DD.systems = {
         if (d < range && d < bestD) { best = enemy; bestD = d; }
       });
       if (!best) return;
-      const angle = (Math.PI * 2 * i) / Math.max(1, S.dwarfActors.length);
-      S.projectiles.push({ x: origin.x + Math.cos(angle) * 24, y: origin.y + Math.sin(angle) * 24, target: best, damage: atk });
+      const angle = (Math.PI * 2 * i) / Math.max(1, S.dwarfActors.length) + performance.now() * 0.0005;
+      S.projectiles.push({ x: origin.x + Math.cos(angle) * 28, y: origin.y + Math.sin(angle) * 28, target: best, damage: atk, age: 0, phase: 'swirl', trail: [] });
       dwarf.attackAge = 0;
       dwarf.cd = interval;
     });
@@ -803,6 +835,7 @@ DD.systems = {
       if (S.heroSweat.age >= 1) S.heroSweat = null;
     }
     S.heroHurtAge = Math.min(999, (S.heroHurtAge ?? 999) + dt);
+    for (const enemy of S.enemies) enemy.hitAge = Math.min(999, (enemy.hitAge ?? 999) + dt);
     if (S.paused || S.mode === 'lost' || S.mode === 'won') return;
     S.heroIdleTime = ((S.heroIdleTime || 0) + dt) % 11.28;
     S.floorTimer += dt;

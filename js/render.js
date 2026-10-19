@@ -316,10 +316,17 @@ DD.render = {
       }
     }
   },
+  enemyHitFlash(enemy) {
+    const age = enemy.hitAge ?? 999;
+    return age < 0.08 || (age >= 0.16 && age < 0.24);
+  },
   drawEnemies() {
     const ctx = DD.state.ctx;
     DD.state.enemies.forEach(e => {
       const def = DD.data.enemyDefs[e.type];
+      ctx.save();
+      // Two discrete red flashes preserve the sprite silhouette and existing motion.
+      if (this.enemyHitFlash(e)) ctx.filter = 'brightness(0) saturate(100%) invert(29%) sepia(98%) saturate(2182%) hue-rotate(339deg) brightness(106%) contrast(115%)';
       if (e.type === 'slime') {
         const sheet = DD.assets.get('slime_sheet');
         if (sheet && sheet.complete && sheet.naturalWidth >= 160 && sheet.naturalHeight >= 64) {
@@ -372,6 +379,7 @@ DD.render = {
           }
         }, e.x - 16, e.y - 16, 32, 32);
       }
+      ctx.restore();
       ctx.fillStyle = 'rgba(0,0,0,.5)'; ctx.fillRect(e.x - 12, e.y - 18, 24, 4);
       ctx.fillStyle = '#ff7d67'; ctx.fillRect(e.x - 12, e.y - 18, 24 * Math.max(0, e.hp / DD.data.enemyDefs[e.type].hp), 4);
     });
@@ -395,9 +403,30 @@ DD.render = {
   },
   drawProjectiles() {
     const ctx = DD.state.ctx;
-    DD.state.projectiles.forEach(p => {
-      ctx.fillStyle = '#d4f0ff'; ctx.beginPath(); ctx.arc(p.x, p.y, 4, 0, Math.PI * 2); ctx.fill();
-    });
+    for (const p of DD.state.projectiles) {
+      ctx.save();
+      const trail = p.trail || [];
+      trail.forEach((point, i) => {
+        ctx.globalAlpha = (i + 1) / Math.max(1, trail.length) * 0.45;
+        ctx.fillStyle = '#8de8ff';
+        ctx.fillRect(Math.round(point.x) - 2, Math.round(point.y) - 2, 4, 4);
+      });
+      ctx.globalAlpha = 1;
+      const x = Math.round(p.x), y = Math.round(p.y);
+      const frame = Math.floor((p.age || 0) / 0.06) % 4;
+      ctx.fillStyle = '#65d8ff';
+      ctx.fillRect(x - 4, y - 2, 8, 4);
+      ctx.fillRect(x - 2, y - 4, 4, 8);
+      ctx.fillStyle = '#c2f5ff';
+      ctx.fillRect(x - 3, y - 3, 6, 6);
+      ctx.fillStyle = '#ffffff';
+      ctx.fillRect(x - 2, y - 2, 4, 4);
+      if (frame === 1 || frame === 3) {
+        ctx.fillRect(x - 1, y - 4, 2, 2);
+        ctx.fillRect(x + 3, y, 2, 2);
+      }
+      ctx.restore();
+    }
   },
   drawDamageNumbers() {
     const ctx = DD.state.ctx;
@@ -416,9 +445,9 @@ DD.render = {
       [...n.text].forEach((ch, i) => (glyphs[ch] || glyphs['0']).forEach((row, y) =>
         [...row].forEach((v, x) => { if (v === '1') pixels.push([left + i * 8 + x * 2, top + y * 2]); })));
       ctx.save(); ctx.globalAlpha = Math.max(0, 1 - n.age);
-      ctx.fillStyle = '#ffffff';
+      ctx.fillStyle = n.kind === 'enemy' ? '#20313b' : '#ffffff';
       for (const [x,y] of pixels) ctx.fillRect(x - 1, y - 1, 4, 4);
-      ctx.fillStyle = '#f24141';
+      ctx.fillStyle = n.kind === 'enemy' ? '#ffffff' : '#f24141';
       for (const [x,y] of pixels) ctx.fillRect(x, y, 2, 2);
       ctx.restore();
     }
