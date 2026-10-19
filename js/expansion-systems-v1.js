@@ -2,9 +2,10 @@
 const X=DD.expansion,S=DD.state,U=DD.utils,T=DD.config.TILE;
 const base={beginFloor:DD.systems.beginFloor,update:DD.systems.update,updateEnemy:DD.systems.updateEnemy,applyDamage:DD.systems.applyDamage,applyUpgrade:DD.systems.applyUpgrade,currentSpawnInterval:DD.systems.currentSpawnInterval};
 // Each player level multiplies spawn frequency by 1.15; retain existing
-// floor, elapsed-time and exploration factors, with a one-second floor.
+// floor, elapsed-time and exploration factors, without a minimum interval.
 DD.systems.currentSpawnInterval=function(){
-  return Math.max(1,base.currentSpawnInterval.call(this)/Math.pow(1.15,Math.max(0,S.player.level-1)));
+  const floorBoost = S.mode === 'dungeon' && S.floor === 3 ? 1.15 : 1;
+  return base.currentSpawnInterval.call(this)/Math.pow(1.15,Math.max(0,S.player.level-1))/floorBoost;
 };
 Object.assign(X,{
   resetFloor(){
