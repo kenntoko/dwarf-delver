@@ -4,6 +4,7 @@ DD.main = {
     const canvas = DD.state.canvas;
     let blockDoubleClick = false;
     let pendingCoin = null;
+    let doubleTarget = null;
     const cellAt = (e) => {
       const rect = canvas.getBoundingClientRect();
       return {
@@ -16,11 +17,14 @@ DD.main = {
       const S = DD.state;
       if (S.mode === 'won' || S.mode === 'lost') return;
       if (e.button === 0 && e.detail === 1) blockDoubleClick = !!S.paused || !!S.itemMode;
-      if (e.button === 0 && e.detail > 1 && blockDoubleClick) return;
+      // The second press belongs to the original gesture, never a new dig.
+      if (e.button === 0 && e.detail > 1) return;
       const { x: gx, y: gy } = cellAt(e);
       if (!DD.utils.inBounds(gx, gy)) return;
       const tile = S.board.grid[gy][gx];
       if (!tile.active) return;
+      if(e.button===0&&e.detail===1)doubleTarget=tile.isOpen&&tile.number>0?{x:gx,y:gy,board:S.board}:null;
+      if(e.button===2)doubleTarget=null;
 
       if (S.paused && S.pauseReason !== 'item') return;
       if (S.pauseReason === 'item' && S.itemMode) {
@@ -56,6 +60,8 @@ DD.main = {
       if (e.button !== 0 || blockDoubleClick) return;
       const { x, y } = cellAt(e);
       if (!DD.utils.inBounds(x, y)) return;
+      const target=doubleTarget;doubleTarget=null;
+      if(!target||target.board!==DD.state.board||target.x!==x||target.y!==y)return;
       e.preventDefault();
       DD.systems.chordTile(x, y);
       DD.ui.refreshHud();

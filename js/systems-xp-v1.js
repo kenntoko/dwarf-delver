@@ -213,7 +213,7 @@ DD.systems = {
     const list = [];
     const p = S.playerPos();
     let reachable = null;
-    if (enemyType === 'slime') {
+    if ((enemyType === 'slime' || enemyType === 'redSlime')) {
       reachable = new Set([DD.utils.key(board.entry.x, board.entry.y)]);
       const queue = [[board.entry.x, board.entry.y]];
       for (let i = 0; i < queue.length; i++) for (const [nx,ny] of DD.utils.neighbors4(...queue[i])) {
@@ -245,7 +245,7 @@ DD.systems = {
   spawnEnemy() {
     const S = DD.state;
     const pool = this.currentEnemyPool();
-    const type = DD.utils.choice(pool);
+    const type = this.chooseSpawnEnemyType ? this.chooseSpawnEnemyType(pool) : DD.utils.choice(pool);
     let spawn;
     if (S.mode === 'boss') {
       spawn = { x: -1, y: -1, cx: DD.config.boardRect.x + DD.utils.randInt(2, DD.config.W - 3) * DD.config.TILE + DD.config.TILE / 2, cy: DD.config.boardRect.y - 20 };
@@ -381,7 +381,7 @@ DD.systems = {
       if (S.mode !== 'boss' && !this.slimeSegmentClear(hero.x, hero.y, p.x, p.y, radius)) continue;
       let cost = Math.hypot(p.x - enemy.x, p.y - enemy.y) + (ring - 32) * 2;
       for (const other of S.enemies || []) {
-        if (other === enemy || other.type !== 'slime' || other.alive === false) continue;
+        if (other === enemy || (other.type !== 'slime' && other.type !== 'redSlime') || other.alive === false) continue;
         const spot = other.meleeSpot || other;
         const d = Math.hypot(spot.x - p.x, spot.y - p.y);
         cost += Math.max(0, 25 - d) * 80;
@@ -397,7 +397,7 @@ DD.systems = {
     if (Math.hypot(enemy.x - hero.x, enemy.y - hero.y) > DD.config.TILE * 3) return;
     let dx = 0, dy = 0;
     for (const other of DD.state.enemies || []) {
-      if (other === enemy || other.type !== 'slime' || other.alive === false) continue;
+      if (other === enemy || (other.type !== 'slime' && other.type !== 'redSlime') || other.alive === false) continue;
       let x = enemy.x - other.x, y = enemy.y - other.y;
       const d = Math.hypot(x, y);
       if (d >= 24) continue;
@@ -528,7 +528,7 @@ DD.systems = {
     const def = DD.data.enemyDefs[enemy.type];
     enemy.repath -= dt;
     const playerPos = S.playerPos();
-    if (enemy.type === 'slime' && enemy.pendingStrike > 0) {
+    if ((enemy.type === 'slime' || enemy.type === 'redSlime') && enemy.pendingStrike > 0) {
       enemy.pendingStrike -= dt;
       if (enemy.pendingStrike <= 0 && enemy.alive !== false &&
           Math.hypot(enemy.x - playerPos.x, enemy.y - playerPos.y) < 66 &&
@@ -538,8 +538,8 @@ DD.systems = {
     }
 
     if (S.mode === 'boss') {
-      let targetPos = enemy.type === 'slime' ? this.slimeApproachPoint(enemy, playerPos) : playerPos;
-      if (enemy.type === 'slime') this.separateSlime(enemy, dt);
+      let targetPos = (enemy.type === 'slime' || enemy.type === 'redSlime') ? this.slimeApproachPoint(enemy, playerPos) : playerPos;
+      if ((enemy.type === 'slime' || enemy.type === 'redSlime')) this.separateSlime(enemy, dt);
       if (enemy.type === 'goblin') {
         const dummy = { x: Math.floor((enemy.x - DD.config.boardRect.x) / DD.config.TILE), y: Math.floor((enemy.y - DD.config.boardRect.y) / DD.config.TILE) };
         const flagGoal = this.findNearestFlagCell(dummy);
@@ -566,10 +566,10 @@ DD.systems = {
       }
       enemy.breakTimer = 0;
       enemy.breakingSign = false;
-      if (!enemy.targetFlag && d < (enemy.type === 'slime' ? 4 : 34)) {
+      if (!enemy.targetFlag && d < ((enemy.type === 'slime' || enemy.type === 'redSlime') ? 4 : 34)) {
         enemy.attackTimer -= dt;
         if (enemy.attackTimer <= 0) {
-          if (enemy.type === 'slime') enemy.pendingStrike = 0.2;
+          if ((enemy.type === 'slime' || enemy.type === 'redSlime')) enemy.pendingStrike = 0.2;
           else this.applyDamage(def.damage);
           enemy.attackAnimTimer = 0;
           this.addLog(`${def.name}の攻撃で ${def.damage} ダメージ～`, 'danger');
@@ -585,7 +585,7 @@ DD.systems = {
       return;
     }
 
-    if (enemy.type === 'slime') {
+    if ((enemy.type === 'slime' || enemy.type === 'redSlime')) {
       this.updateSlime(enemy, dt);
       return;
     }

@@ -327,7 +327,12 @@ DD.render = {
       ctx.save();
       // Two discrete red flashes preserve the sprite silhouette and existing motion.
       if (this.enemyHitFlash(e)) ctx.filter = 'brightness(0) saturate(100%) invert(29%) sepia(98%) saturate(2182%) hue-rotate(339deg) brightness(106%) contrast(115%)';
-      if (e.type === 'slime') {
+      if (e.type === 'redSlime') {
+        const sheet=DD.redSlime.getSheet();
+        const attack=e.attackAnimTimer<0.48;
+        const frame=attack?Math.min(3,Math.floor(e.attackAnimTimer/0.12)):Math.floor((DD.state.runTime||0)/0.14)%5;
+        if(sheet){ctx.imageSmoothingEnabled=false;ctx.drawImage(sheet,frame*32,attack?32:0,32,32,Math.round(e.x-32),Math.round(e.y-32),64,64);}
+      } else if (e.type === 'slime') {
         const sheet = DD.assets.get('slime_sheet');
         if (sheet && sheet.complete && sheet.naturalWidth >= 160 && sheet.naturalHeight >= 64) {
           let sx = 0, sy = 0;
@@ -380,8 +385,9 @@ DD.render = {
         }, e.x - 16, e.y - 16, 32, 32);
       }
       ctx.restore();
-      ctx.fillStyle = 'rgba(0,0,0,.5)'; ctx.fillRect(e.x - 12, e.y - 18, 24, 4);
-      ctx.fillStyle = '#ff7d67'; ctx.fillRect(e.x - 12, e.y - 18, 24 * Math.max(0, e.hp / DD.data.enemyDefs[e.type].hp), 4);
+      const barWidth=e.type==='redSlime'?48:24,barY=e.y-(e.type==='redSlime'?36:18);
+      ctx.fillStyle = 'rgba(0,0,0,.5)'; ctx.fillRect(e.x - barWidth/2, barY, barWidth, 4);
+      ctx.fillStyle = '#ff7d67'; ctx.fillRect(e.x - barWidth/2, barY, barWidth * Math.max(0, e.hp / DD.data.enemyDefs[e.type].hp), 4);
     });
   },
   drawGoblinSignMeters() {
@@ -476,3 +482,4 @@ DD.render = {
     this.drawBossHud();
   }
 };
+
