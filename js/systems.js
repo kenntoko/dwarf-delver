@@ -50,7 +50,18 @@ DD.systems = {
   currentSpawnInterval() {
     const S = DD.state;
     const growth = Math.pow(1.1, Math.floor(S.floorTimer / 60));
-    return S.spawnBase / growth;
+    const timedInterval = S.spawnBase / growth;
+    if (S.mode !== 'dungeon' || !S.board) return timedInterval;
+    // Keep the floor's original safe-cell total stable when reinforcement removes hazards.
+    if (S.board.spawnSafeTileCount == null) {
+      S.board.spawnSafeTileCount = S.board.grid.reduce((sum, row) =>
+        sum + row.filter(tile => tile.active && !tile.isDanger).length, 0);
+    }
+    const opened = S.board.grid.reduce((sum, row) =>
+      sum + row.filter(tile => tile.active && tile.isOpen).length, 0);
+    const explored = Math.min(1, Math.max(0, opened / Math.max(1, S.board.spawnSafeTileCount)));
+    // 25/50/75/100% explored gives 1.25/1.5/1.75/2x spawn frequency.
+    return Math.max(2, timedInterval / (1 + explored));
   },
   currentXpMultiplier() {
     return 1 + DD.state.player.upgrades.xpBoost * 0.1;
