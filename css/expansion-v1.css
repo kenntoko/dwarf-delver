@@ -1,4 +1,10 @@
-.equipment-dock{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:6px;min-height:38px;font-family:GuiDot,monospace}
+.equipment-dock{display:flex;gap:4px;font-family:GuiDot,monospace}
+.inventory-row{align-items:flex-end;flex-wrap:nowrap;gap:8px}
+.hud-owned-items{display:flex;align-items:flex-end;justify-content:safe flex-end;gap:4px;max-width:55%;min-width:0;overflow-x:auto;overflow-y:hidden;scrollbar-width:thin;padding-bottom:4px}
+.hud-owned-items .equipment-dock{flex:none}
+.hud-owned-items #inventoryDock{flex:none;width:auto;min-height:52px;flex-wrap:nowrap}
+#equipmentDock .equipment-hud{flex:0 0 40px;width:40px;height:52px;padding:2px;display:flex;flex-direction:column;gap:0;border:2px solid #77613e;font-size:12px;line-height:12px}
+#equipmentDock .equipment-hud img{width:32px;height:32px}
 .bonus-shelf{flex:1;min-width:0}.bonus-slot-count{font-family:GuiDot,monospace;color:#d5c397;font-size:12px;line-height:16px;margin-bottom:4px}
 .equipment-slot{display:flex;flex-direction:row;align-items:center;gap:6px;padding:4px;height:46px;box-sizing:border-box;background:#2c241a;color:#fff1d1;border:1px solid #b59658;font-family:GuiDot,monospace;font-size:12px;line-height:1.4;text-align:left;min-width:0;cursor:pointer}
 .equipment-slot img{image-rendering:pixelated;flex:none}.equipment-slot span{overflow-wrap:anywhere}

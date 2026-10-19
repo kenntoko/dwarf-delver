@@ -6,16 +6,20 @@ DD.assets.load=function(){
   const extra=['devil','golem','maid'].map(key=>new Promise(resolve=>{const img=new Image();img.onload=img.onerror=resolve;img.src='./assets/expansion/'+key+'_sheet.png';X.images[key]=img;}));
   return Promise.all([originalLoad.call(this),...extra]);
 };
-X.drawSprite=function(key,frame,a,offsetY=0){
+X.drawSprite=function(key,frame,a,offsetY=0,flip=false){
   const img=this.images[key];if(!img?.complete||!img.naturalWidth)return;
   // Enlarge companion art while retaining its ground anchor and crisp pixels.
-  const size=48,c=S.ctx;c.save();c.imageSmoothingEnabled=false;c.drawImage(img,frame*32,0,32,32,Math.round(a.x-size/2),Math.round(a.y+6-size+offsetY),size,size);c.restore();
+  const size=48,c=S.ctx,left=Math.round(a.x-size/2),top=Math.round(a.y+6-size+offsetY);c.save();c.imageSmoothingEnabled=false;
+  if(flip){c.translate(left+size,top);c.scale(-1,1);c.drawImage(img,frame*32,0,32,32,0,0,size,size);}
+  else c.drawImage(img,frame*32,0,32,32,left,top,size,size);c.restore();
 };
 X.drawCompanions=function(){
   // Integer-pixel key positions only: no interpolation or sprite stretching.
   for(const a of S.devils||[]){const attacking=a.attackAge<.35,hover=[0,-1,-2,-1][Math.floor((a.age+a.variant*.3)/.3)%4];this.drawSprite('devil',a.variant+(attacking?3:0),a,hover);}
   if(S.guard){const a=S.guard,attacking=a.attackAge<.3;this.drawSprite('golem',attacking?3:0,a,attacking?0:[0,-1,-1,0][Math.floor(a.age/.45)%4]);}
-  if(S.maid){const lv=this.lv('maid'),sequences=[[0,1,0,1],[0,1,2,1],[0,2,1,3],[0,1,2,3],[0,2,1,3]],frame=sequences[lv-1][Math.floor(S.maid.age/(.29-lv*.035))%4];this.drawSprite('maid',frame,S.maid);}
+  if(S.maid){const lv=this.lv('maid'),sequences=[[0,1,0,1],[0,1,2,1],[0,2,1,3],[0,1,2,3],[0,2,1,3]],frame=sequences[lv-1][Math.floor(S.maid.age/(.29-lv*.035))%4];
+    // Frames 0–2 face left; frame 3 faces right. Keep every fan pose aimed at the hero.
+    const heroOnRight=S.playerPos().x>=S.maid.x;this.drawSprite('maid',frame,S.maid,0,heroOnRight!==(frame===3));}
 };
 X.drawArea=function(){
   const ctx=S.ctx,p=S.playerPos();

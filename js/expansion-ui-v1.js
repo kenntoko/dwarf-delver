@@ -6,16 +6,17 @@ X.equipmentIcon=key=>'./assets/expansion/icon_'+key+'.png';
 X.renderEquipment=function(){
   const slotCount=document.getElementById('bonusSlotCount');if(slotCount)slotCount.textContent='追加ボーナス '+this.bonusKeys().length+' / 5';
   const keys=Object.keys(S.equipment||{}),signature=keys.map(k=>k+':'+S.equipment[k]).join(',');
-  const make=k=>`<button type="button" class="equipment-slot inspect-icon" data-inspect-type="equipment" data-inspect-key="${k}" aria-label="${this.equipmentDefs[k].name} Lv${S.equipment[k]}"><img src="${this.equipmentIcon(k)}" width="32" height="32" alt=""><span>${this.equipmentDefs[k].name}<br>Lv${S.equipment[k]} / 5</span></button>`;
+  const make=(k,compact=false)=>`<button type="button" class="equipment-slot inspect-icon ${compact?'equipment-hud':''}" data-inspect-type="equipment" data-inspect-key="${k}" aria-label="${this.equipmentDefs[k].name} Lv${S.equipment[k]}"><img src="${this.equipmentIcon(k)}" width="32" height="32" alt=""><span class="icon-value">${compact?'':this.equipmentDefs[k].name+'<br>'}Lv${S.equipment[k]}${compact?'':' / 5'}</span></button>`;
   const dock=document.getElementById('equipmentDock'),menu=document.getElementById('menuEquipment');
-  if(dock&&dock.dataset.signature!==signature){dock.dataset.signature=signature;dock.innerHTML=keys.map(make).join('')+Array.from({length:3-keys.length},()=>'<div class="equipment-empty">装備枠</div>').join('');}
-  if(menu&&menu.dataset.signature!==signature){menu.dataset.signature=signature;menu.innerHTML=keys.length?keys.map(make).join(''):'<p>なし（最大3種類）</p>';}
+  if(dock&&dock.dataset.signature!==signature){dock.dataset.signature=signature;dock.innerHTML=keys.map(k=>make(k,true)).join('');}
+  if(menu&&menu.dataset.signature!==signature){menu.dataset.signature=signature;menu.innerHTML=keys.length?keys.map(k=>make(k)).join(''):'<p>なし（最大3種類）</p>';}
 };
 UI.bindDom=function(){
   const hud=document.getElementById('gameHud');
   const bonuses=document.getElementById('upgradesBox'),shelf=document.createElement('div');shelf.className='bonus-shelf';bonuses.before(shelf);
   const count=document.createElement('div');count.id='bonusSlotCount';count.className='bonus-slot-count';count.title='固有の奴隷調達・銭投げは別枠';shelf.append(count,bonuses);
-  const dock=document.createElement('div');dock.id='equipmentDock';dock.className='equipment-dock';dock.setAttribute('role','group');dock.setAttribute('aria-label','パッシブ装備・最大3枠');hud.appendChild(dock);
+  const inventory=document.getElementById('inventoryDock'),right=document.createElement('div');right.className='hud-owned-items';inventory.before(right);
+  const dock=document.createElement('div');dock.id='equipmentDock';dock.className='equipment-dock';dock.setAttribute('role','group');dock.setAttribute('aria-label','パッシブ装備・最大3枠');right.append(dock,inventory);
   const menu=document.createElement('section');menu.innerHTML='<h2>パッシブ装備</h2><div id="menuEquipment" class="menu-icon-grid"></div>';
   document.getElementById('menuItems').parentElement.insertBefore(menu,document.getElementById('menuItems').previousElementSibling);
   base.bindDom.call(this);this.bindInspectSurface(dock,false);this.bindInspectSurface(document.getElementById('menuEquipment'),true);
