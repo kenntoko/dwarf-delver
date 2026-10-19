@@ -117,8 +117,8 @@ Object.assign(X,{
       p.trail.push({x:p.x,y:p.y});if(p.trail.length>5)p.trail.shift();
       if(p.kind==='magic'&&p.age<.18){const t=p.age/.18,r=8*Math.sin(Math.PI*t),a=p.launchAngle+Math.PI*2*t;p.x=p.launchX+Math.cos(a)*r;p.y=p.launchY+Math.sin(a)*r;p.phase='swirl';continue;}
       if(p.kind==='magic'&&p.phase==='swirl'){p.x=p.launchX;p.y=p.launchY;p.phase='flight';}
-      if(p.kind==='magic'&&p.target){const dx=p.target.x-p.x,dy=p.target.y-p.y,len=Math.hypot(dx,dy)||1;p.vx=dx/len;p.vy=dy/len;}
-      const speed=p.kind==='coin'?320:p.kind==='fire'?230:100+400*Math.min(1,(p.age-.18)/.45)**2;
+      if((p.kind==='magic'||p.kind==='fire')&&p.target){const dx=p.target.x-p.x,dy=p.target.y-p.y,len=Math.hypot(dx,dy)||1;p.vx=dx/len;p.vy=dy/len;}
+      const speed=p.kind==='coin'?320:p.kind==='fire'?70+230*Math.min(1,p.age/.45)**2:100+400*Math.min(1,(p.age-.18)/.45)**2;
       const travel=speed*(p.kind==='magic'?Math.min(dt,Math.max(0,p.age-.18)):dt),steps=Math.max(1,Math.ceil(travel/3)),step=travel/steps;
       for(let i=0;i<steps&&!p.dead;i++){
         let nx=p.x+p.vx*step,ny=p.y+p.vy*step;
@@ -161,7 +161,7 @@ Object.assign(X,{
       }
       if(a.goal)this.moveTo(a,a.goal,28,dt);
       if(a.cd<=0){let target=null,best=T*4;for(const e of S.enemies){const d=Math.hypot(e.x-a.x,e.y-a.y);if(e.alive&&d<best){target=e;best=d;}}
-        if(target){const t=this.stat('devil');this.spawnShot('fire',a.x,a.y,Math.atan2(target.y-a.y,target.x-a.x),t[1],null,this.gear('ring'),this.gear('mirror'));a.cd=this.interval(t[2]);a.attackAge=0;}
+        if(target){const t=this.stat('devil');this.spawnShot('fire',a.x,a.y,Math.atan2(target.y-a.y,target.x-a.x),t[1],target,this.gear('ring'),this.gear('mirror'));a.cd=this.interval(t[2]);a.attackAge=0;}
       }
     }
     const g=S.guard;

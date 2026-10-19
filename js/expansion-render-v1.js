@@ -48,7 +48,14 @@ R.drawProjectiles=function(){
       const frame=Math.floor(p.age/.08)%4,w=frame%2?3:7;
       ctx.fillStyle='#624529';ctx.fillRect(x-Math.floor(w/2)-1,y-5,w+2,10);ctx.fillStyle='#f5c94f';ctx.fillRect(x-Math.floor(w/2),y-4,w,8);ctx.fillStyle='#fff1c3';ctx.fillRect(x-Math.floor(w/2),y-3,1,6);
     }else{
-      const frame=Math.floor(p.age/.1)%2;ctx.fillStyle='#da4a26';ctx.fillRect(x-4,y-4,8,8);ctx.fillRect(x-2,y-6-frame*2,4,5);ctx.fillStyle='#ffad37';ctx.fillRect(x-3,y-2,6,6);ctx.fillStyle='#fff0b1';ctx.fillRect(x-1,y,3,3);
+      // Four hand-set pixel flame poses, with square embers along the flight path.
+      const frame=Math.floor(p.age/.09)%4,tip=[-3,1,-1,3][frame];
+      for(let i=0;i<3;i++){const back=(i+1)*7,side=[-2,2,0][(i+frame)%3];ctx.fillStyle=i===0?'#f47b27':'#a94020';ctx.fillRect(Math.round(x-p.vx*back-p.vy*side)-2,Math.round(y-p.vy*back+p.vx*side)-2,i===0?4:2,i===0?4:2);}
+      ctx.fillStyle='#863020';ctx.fillRect(x-8,y-8,16,18);ctx.fillRect(x-10,y-4,20,10);
+      ctx.fillStyle='#e84b20';ctx.fillRect(x-8,y-6,16,14);ctx.fillRect(x-6,y-10,12,6);ctx.fillRect(x+tip-2,y-16,4,10);ctx.fillRect(x-8,y-12+(frame%2)*2,4,8);ctx.fillRect(x+6,y-10-(frame%2)*2,4,8);
+      ctx.fillStyle='#ff9b2f';ctx.fillRect(x-6,y-4,12,12);ctx.fillRect(x-4+tip,y-10,4,10);
+      ctx.fillStyle='#ffe478';ctx.fillRect(x-4,y,8,6);ctx.fillRect(x-2+(frame%2)*2,y-4,4,8);
+      ctx.fillStyle='#fff5cd';ctx.fillRect(x-2,y+2,4,4);
     }ctx.restore();
   }
 };
