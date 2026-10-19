@@ -211,9 +211,9 @@ Object.assign(X,{
     for(const key of Object.keys(this.equipmentDefs))if((gear[key]||0)<5&&(gear[key]||slots<3))items.push({type:'equipment',key});
     return U.shuffle(items).slice(0,3);
   },
-  acquireReward(choice){
+  acquireReward(choice,debug=false){
     if(choice.type==='item'){DD.systems.grantChestItem(choice.key);return true;}
-    const gear=S.equipment,key=choice.key;if(!this.equipmentDefs[key]||(gear[key]||0)>=5||(!gear[key]&&Object.keys(gear).length>=3))return false;
+    const gear=S.equipment,key=choice.key;if(!this.equipmentDefs[key]||(gear[key]||0)>=5||(!debug&&!gear[key]&&Object.keys(gear).length>=3))return false;
     const old=gear[key]||0;gear[key]=old+1;
     if(key==='ring'||key==='mirror')for(const shot of S.projectiles)if(!shot.dead){const field=key==='ring'?'penetrations':'bounces';shot[field]=(shot[field]||0)+1;}
     if(key==='megaphone'){const ratio=(1-gear[key]*.08)/(1-old*.08);for(const a of [...S.dwarfActors,...S.devils,...(S.guard?[S.guard]:[])])a.cd=Math.max(0,a.cd||0)*ratio;}
