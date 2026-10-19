@@ -1,5 +1,5 @@
 (() => {
-  let context, buffer, rubble, sign, batHurt, loading, last = -Infinity, lastSign = -Infinity, lastBatHurt = -Infinity, voice, slideVoice;
+  let context, buffer, rubble, sign, batHurt, slimeHurt, loading, last = -Infinity, lastSign = -Infinity, lastBatHurt = -Infinity, lastSlimeHurt = -Infinity, voice, slideVoice;
   let batch = 0, timer = null, board = null, slideUntil = 0;
   const AudioContext = window.AudioContext || window.webkitAudioContext;
   function unlock() {
@@ -7,11 +7,11 @@
     try {
       context ||= new AudioContext();
       if (context.state === 'suspended') context.resume().catch(() => {});
-      if (!loading) loading = Promise.all(['mining','rockslide-8bit-gorogoro-v3-eq','sign-place-to-v6','bat-hurt-v1'].map(name =>
+      if (!loading) loading = Promise.all(['mining','rockslide-8bit-gorogoro-v3-eq','sign-place-to-v6','bat-hurt-v1','slime-hurt-v1'].map(name =>
         fetch('./assets/audio/'+name+'.wav')
         .then(r => { if (!r.ok) throw new Error('Audio unavailable'); return r.arrayBuffer(); })
         .then(bytes => context.decodeAudioData(bytes))))
-        .then(decoded => { [buffer,rubble,sign,batHurt] = decoded; })
+        .then(decoded => { [buffer,rubble,sign,batHurt,slimeHurt] = decoded; })
         .catch(() => { loading = null; });
     } catch (_) { /* Audio must never interrupt gameplay. */ }
   }
@@ -80,6 +80,16 @@
         lastBatHurt = now;
         const source = context.createBufferSource();
         source.buffer = batHurt;
+        source.connect(context.destination);
+        source.start();
+      }
+    }
+    if (enemy?.type === 'slime' && actual > 0 && slimeHurt && context?.state === 'running' && !document.hidden) {
+      const now = context.currentTime;
+      if (now - lastSlimeHurt >= .09) {
+        lastSlimeHurt = now;
+        const source = context.createBufferSource();
+        source.buffer = slimeHurt;
         source.connect(context.destination);
         source.start();
       }
