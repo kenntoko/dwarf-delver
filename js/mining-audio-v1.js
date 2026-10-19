@@ -7,7 +7,7 @@
     try {
       context ||= new AudioContext();
       if (context.state === 'suspended') context.resume().catch(() => {});
-      if (!loading) loading = Promise.all(['mining','rockslide'].map(name =>
+      if (!loading) loading = Promise.all(['mining','rockslide-gorogoro-v2'].map(name =>
         fetch('./assets/audio/'+name+'.wav')
         .then(r => { if (!r.ok) throw new Error('Audio unavailable'); return r.arrayBuffer(); })
         .then(bytes => context.decodeAudioData(bytes))))
