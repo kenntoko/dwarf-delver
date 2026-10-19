@@ -849,6 +849,7 @@ DD.systems = {
         const remainingPotential = DD.board.bossRemainingPotential(S.board);
         const need = Math.min(DD.config.bossThresholdBase, S.bossWindowScore + remainingPotential);
         if (S.bossWindowScore < need) {
+          if(DD.ui.bossImpact)DD.ui.bossImpact();
           this.applyDamage(DD.config.bossAttackDamage);
           this.addLog(`ゴーレムの攻撃を受けた～ (${DD.config.bossAttackDamage}ダメージ)`, 'danger');
         } else {
