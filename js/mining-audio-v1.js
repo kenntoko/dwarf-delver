@@ -1,5 +1,5 @@
 (() => {
-  let context, buffer, rubble, loading, last = -Infinity, voice, slideVoice;
+  let context, buffer, rubble, sign, loading, last = -Infinity, lastSign = -Infinity, voice, slideVoice;
   let batch = 0, timer = null, board = null, slideUntil = 0;
   const AudioContext = window.AudioContext || window.webkitAudioContext;
   function unlock() {
@@ -7,11 +7,11 @@
     try {
       context ||= new AudioContext();
       if (context.state === 'suspended') context.resume().catch(() => {});
-      if (!loading) loading = Promise.all(['mining','rockslide-8bit-gorogoro-v3-eq'].map(name =>
+      if (!loading) loading = Promise.all(['mining','rockslide-8bit-gorogoro-v3-eq','sign-place-to-v6'].map(name =>
         fetch('./assets/audio/'+name+'.wav')
         .then(r => { if (!r.ok) throw new Error('Audio unavailable'); return r.arrayBuffer(); })
         .then(bytes => context.decodeAudioData(bytes))))
-        .then(decoded => { [buffer,rubble] = decoded; })
+        .then(decoded => { [buffer,rubble,sign] = decoded; })
         .catch(() => { loading = null; });
     } catch (_) { /* Audio must never interrupt gameplay. */ }
   }
@@ -53,5 +53,22 @@
       },80);
     }
     return opened;
+  };
+  const toggleFlag = DD.systems.toggleFlag;
+  DD.systems.toggleFlag = function(x,y) {
+    const tile = DD.state.board?.grid?.[y]?.[x];
+    const before = tile?.flagged;
+    const result = toggleFlag.call(this,x,y);
+    if (tile && !before && tile.flagged && sign && context?.state === 'running' && !document.hidden) {
+      const now = context.currentTime;
+      if (now - lastSign >= .08) {
+        lastSign = now;
+        const source = context.createBufferSource();
+        source.buffer = sign;
+        source.connect(context.destination);
+        source.start();
+      }
+    }
+    return result;
   };
 })();
