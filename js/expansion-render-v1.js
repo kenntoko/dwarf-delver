@@ -8,7 +8,8 @@ DD.assets.load=function(){
 };
 X.drawSprite=function(key,frame,a){
   const img=this.images[key];if(!img?.complete||!img.naturalWidth)return;
-  const c=S.ctx;c.save();c.imageSmoothingEnabled=false;c.drawImage(img,frame*32,0,32,32,Math.round(a.x-16),Math.round(a.y-26),32,32);c.restore();
+  // Enlarge companion art while retaining its ground anchor and crisp pixels.
+  const size=48,c=S.ctx;c.save();c.imageSmoothingEnabled=false;c.drawImage(img,frame*32,0,32,32,Math.round(a.x-size/2),Math.round(a.y+6-size),size,size);c.restore();
 };
 X.drawCompanions=function(){
   for(const a of S.devils||[])this.drawSprite('devil',a.variant+(a.attackAge<.35?3:0),a);
