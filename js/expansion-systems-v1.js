@@ -4,7 +4,7 @@ const base={beginFloor:DD.systems.beginFloor,update:DD.systems.update,updateEnem
 Object.assign(X,{
   resetFloor(){
     S.digClock=0;S.digQueue=[];S.digPending=new Set();S.openRevision=0;
-    S.devils=[];S.guard=null;S.maid=null;S.decoys=[];S.perfumeTimer=0;S.decoyTimer=0;S.openCache=null;
+    S.devils=[];S.guard=null;S.maid=null;S.decoys=[];S.decoyRevision=(S.decoyRevision||0)+1;S.perfumeTimer=0;S.decoyTimer=0;S.openCache=null;
     for(const d of S.dwarfActors){d.contacts=new Set();d.attackAge=999;}
     this.syncAllies();
   },
@@ -199,14 +199,19 @@ Object.assign(X,{
   updateDecoys(dt){
     if(!this.lv('decoy'))return;const t=this.stat('decoy');S.decoys=S.decoys.filter(d=>d.hp>0);const existing=new Set(S.decoys);S.decoyTimer+=dt;
     if(S.decoyTimer+1e-8>=t[1]){S.decoyTimer%=t[1];const opts=U.shuffle(this.openCells().filter(c=>{const tile=S.board.grid[c.y][c.x];return !tile.chest&&!tile.isExit&&!tile.isEntrance&&!S.decoys.some(d=>d.tileX===c.x&&d.tileY===c.y);}));
-      while(S.decoys.length<t[0]&&opts.length){const c=opts.pop(),pos=U.tileCenter(c.x,c.y),hp=Math.max(1,S.player.maxHp*t[2]);S.decoys.push({tileX:c.x,tileY:c.y,...pos,hp,maxHp:hp,incomeTime:0});}
+      while(S.decoys.length<t[0]&&opts.length){const c=opts.pop(),pos=U.tileCenter(c.x,c.y),hp=Math.max(1,S.player.maxHp*t[2]);S.decoys.push({tileX:c.x,tileY:c.y,...pos,hp,maxHp:hp,incomeTime:0});S.decoyRevision=(S.decoyRevision||0)+1;}
     }
     for(const d of S.decoys){const max=Math.max(1,S.player.maxHp*t[2]);if(max!==d.maxHp){d.hp=Math.min(max,d.hp+Math.max(0,max-d.maxHp));d.maxHp=max;}if(existing.has(d))d.incomeTime+=dt;while(d.incomeTime+1e-8>=5){d.incomeTime=Math.max(0,d.incomeTime-5);this.addScore(10);}}
   },
   decoyTarget(e,dt){
     e.decoyCheck=(e.decoyCheck||0)-dt;
-    if(e.decoyCheck>0&&e.decoyTarget?.hp>0)return e.decoyTarget;
-    e.decoyCheck=.5;const opts=S.decoys.filter(d=>d.hp>0).sort((a,b)=>Math.hypot(a.x-e.x,a.y-e.y)-Math.hypot(b.x-e.x,b.y-e.y));
+    const hero=S.playerPos(),heroDistance=Math.hypot(hero.x-e.x,hero.y-e.y);
+    if(e.decoyCheck>0&&e.decoyRevision===S.decoyRevision){
+      if(!e.decoyTarget)return null;
+      if(e.decoyTarget.hp>0&&Math.hypot(e.decoyTarget.x-e.x,e.decoyTarget.y-e.y)<heroDistance)return e.decoyTarget;
+    }
+    e.decoyCheck=.5;e.decoyRevision=S.decoyRevision;
+    const opts=S.decoys.filter(d=>d.hp>0&&Math.hypot(d.x-e.x,d.y-e.y)<heroDistance).sort((a,b)=>Math.hypot(a.x-e.x,a.y-e.y)-Math.hypot(b.x-e.x,b.y-e.y));
     e.decoyTarget=opts.find(d=>Math.hypot(d.x-e.x,d.y-e.y)<T||this.route(e,d).length)||null;return e.decoyTarget;
   },
   lootCandidates(){
