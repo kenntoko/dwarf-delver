@@ -1,5 +1,5 @@
 @font-face{font-family:BossDot;src:url('../assets/boss-ui-dot.ttf') format('truetype');font-display:block}
-#app.is-boss{width:min(calc(100vw - 16px),max(320px,calc((100dvh - 64px)*.923077)))}
+#app.is-boss{width:min(calc(100vw - 16px),max(320px,calc((100dvh - 64px)*.821918)))}
 #bossHud[hidden]{display:none}
 #bossHud{margin-top:6px;padding:8px;background:#201d19;border:2px solid #a38a59;font-family:BossDot,GuiDot,monospace;color:#fff0cd;font-size:14px;line-height:20px}
 .boss-objective{margin:0 0 4px;font:inherit;color:#ffd37a}

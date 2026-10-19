@@ -23,8 +23,8 @@ UI.bossImpact=function(){const wrap=document.getElementById('boardWrap');wrap.cl
 const begin=DD.systems.beginFloor;
 DD.systems.beginFloor=function(floor){
   const boss=floor>3;
-  DD.config.boardRect.y=boss?560:360;
-  DD.config.CANVAS_H=boss?1300:1100;
+  DD.config.boardRect.y=boss?720:360;
+  DD.config.CANVAS_H=boss?1460:1100;
   if(S.canvas)S.canvas.height=DD.config.CANVAS_H;
   const viewport=document.getElementById('mapViewport');if(viewport)viewport.style.aspectRatio=`1200/${DD.config.CANVAS_H}`;
   document.getElementById('app').classList.toggle('is-boss',boss);
