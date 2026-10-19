@@ -4,7 +4,8 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Dwarf Delver Pre-release</title>
-<link rel="stylesheet" href="./css/styles.css?v=time-right-1">
+<link rel="stylesheet" href="./css/styles.css?v=expansion-1">
+<link rel="stylesheet" href="./css/expansion-v1.css?v=expansion-1">
 </head>
 <body>
 <main id="app">
@@ -43,7 +44,7 @@
           <div class="menu-future"><button disabled>設定</button><button disabled>諦める</button></div>
           <details class="menu-extra"><summary>操作・フロア情報・ログ</summary>
             <p>Dwarf Delver Pre-release</p>
-            <p>左クリック：採掘／宝箱開封<br>右クリック：危険看板<br>数字をダブルクリック：周囲を一括採掘（旗数一致時）<br>N：次階層へ／Esc：閉じる・キャンセル</p>
+            <p>未開拓を左クリック：採掘<br>開拓済みを左クリック：銭投げ（1枚1スコア）<br>宝箱をクリック：3択から取得<br>右クリック：危険看板<br>数字をダブルクリック：周囲を一括採掘（旗数一致時）<br>N：次階層へ／Esc：閉じる・キャンセル</p>
             <p id="statusText"></p><div id="floorInfo"></div><div id="log"></div>
           </details>
         </div>
@@ -59,9 +60,14 @@
   <script src="./js/state.js"></script>
   <script src="./js/board.js?v=chest-open-1"></script>
   <script src="./js/systems-magic-v1.js?v=magic-flight-1"></script>
-  <script src="./js/ui-spirit-v1.js?v=spirit-soul-1"></script>
+  <script src="./js/ui-expansion-base-v1.js?v=expansion-1"></script>
   <script src="./js/render-magic-v1.js?v=magic-flight-1"></script>
-  <script src="./js/main-gui-v1.js?v=game-gui-1"></script>
+  <script src="./js/expansion-data-v1.js?v=expansion-1"></script>
+  <script src="./js/expansion-systems-v1.js?v=expansion-1"></script>
+  <script src="./js/expansion-ui-v1.js?v=expansion-1"></script>
+  <script src="./js/expansion-render-v1.js?v=expansion-1"></script>
+  <script src="./js/main-expansion-v1.js?v=expansion-1"></script>
 
 </body>
 </html>
+
