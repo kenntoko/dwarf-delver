@@ -205,7 +205,7 @@ DD.ui = {
   itemTerms(key) {
     if (key === 'heal') return 'HPを30回復（最大HPまで）。HP満タンでも消費されます。';
     const condition = DD.state.mode === 'boss' ? '未探索マスを選択。' : '開いたマスに隣接する未探索マスを選択。';
-    if (key === 'reinforce') return condition + '危険岩盤を安全化。安全マスでも消費されます。';
+    if (key === 'reinforce') return DD.data.itemDefs.reinforce.desc;
     if (key === 'survey') return DD.data.itemDefs.survey.desc;
     return condition + '周囲8マスの未探索マスの情報を表示。';
   },

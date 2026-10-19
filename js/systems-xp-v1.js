@@ -789,13 +789,11 @@ DD.systems = {
       S.inventory[itemKey] -= 1;
       if (tile.isDanger) {
         tile.isDanger = false;
-        tile.reinforced = true;
         DD.board.recomputeNumbers(board);
-        this.addLog('補強資材で危険岩盤を安全化した～', 'good');
-      } else {
-        tile.reinforced = true;
-        this.addLog('補強資材を使ったけど、もともと安全な岩盤だった～');
       }
+      tile.reinforced = true;
+      tile.flagged = false;
+      this.addLog('補強資材で岩盤を安全に破壊した～', 'good');
     }
     if (itemKey === 'survey') {
       S.inventory[itemKey] -= 1;
@@ -809,6 +807,7 @@ DD.systems = {
     }
     this.consumeItemUnit(itemKey);
     DD.ui.clearItemMode();
+    if (itemKey === 'reinforce') this.openTile(x, y);
     DD.ui.refreshHud();
   },
   nextFloor() {
