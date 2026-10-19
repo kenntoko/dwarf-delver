@@ -151,16 +151,19 @@ Object.assign(X,{
   },
   updateAllies(dt){
     this.syncAllies();const p=S.playerPos();
+    let rescueTarget=null;
+    if(S.devilRescue){let best=T*4;for(const e of S.enemies){const d=Math.hypot(e.x-p.x,e.y-p.y);if(e.alive&&d<best){rescueTarget=e;best=d;}}if(!rescueTarget)S.devilRescue=false;}
     for(const a of S.devils){
       a.age+=dt;a.attackAge+=dt;a.cd-=dt;
-      if(!a.goal||Math.hypot(a.goal.x-a.x,a.goal.y-a.y)<3){
+      if(!rescueTarget&&(!a.goal||Math.hypot(a.goal.x-a.x,a.goal.y-a.y)<3)){
         const c=this.cell(a.x,a.y);a.visited.set(U.key(c.x,c.y),(a.visited.get(U.key(c.x,c.y))||0)+1);
         let opts=U.neighbors4(c.x,c.y).filter(n=>{const t=S.board.grid[n[1]][n[0]];return t.active&&t.isOpen;});
         if(opts.length){opts=U.shuffle(opts);let best=Infinity,choices=[];for(const n of opts){const v=a.visited.get(U.key(...n))||0;if(v<best){best=v;choices=[n];}else if(v===best)choices.push(n);}const n=Math.random()<.7?U.choice(choices):U.choice(opts);a.goal=U.tileCenter(...n);}
         else if(S.mode==='boss')a.goal={x:a.x+(Math.random()-.5)*T*2,y:a.y+(Math.random()-.5)*T};
       }
-      if(a.goal)this.moveTo(a,a.goal,28,dt);
-      if(a.cd<=0){let target=null,best=T*4;for(const e of S.enemies){const d=Math.hypot(e.x-a.x,e.y-a.y);if(e.alive&&d<best){target=e;best=d;}}
+      if(rescueTarget){a.goal=null;if(Math.hypot(a.x-p.x,a.y-p.y)>T*2)this.moveTo(a,p,28,dt);else if(Math.hypot(rescueTarget.x-a.x,rescueTarget.y-a.y)>T*3)this.moveTo(a,rescueTarget,28,dt);}
+      else if(a.goal)this.moveTo(a,a.goal,28,dt);
+      if(a.cd<=0){let target=rescueTarget&&Math.hypot(rescueTarget.x-a.x,rescueTarget.y-a.y)<T*4?rescueTarget:null,best=T*4;if(!rescueTarget)for(const e of S.enemies){const d=Math.hypot(e.x-a.x,e.y-a.y);if(e.alive&&d<best){target=e;best=d;}}
         if(target){const t=this.stat('devil');this.spawnShot('fire',a.x,a.y,Math.atan2(target.y-a.y,target.x-a.x),t[1],target,this.gear('ring'),this.gear('mirror'));a.cd=this.interval(t[2]);a.attackAge=0;}
       }
     }
@@ -220,14 +223,14 @@ Object.assign(X,{
     DD.systems.addLog(`${this.equipmentDefs[key].name} Lv${gear[key]} を装備～`,'good');return true;
   }
 });
-DD.systems.beginFloor=function(floor){base.beginFloor.call(this,floor);X.resetFloor();};
+DD.systems.beginFloor=function(floor){base.beginFloor.call(this,floor);X.resetFloor();S.devilRescue=false;};
 DD.systems.openTile=function(x,y){
   if(S.mode==='lost'||S.mode==='won'||!U.inBounds(x,y))return;
   const t=S.board.grid[y][x];if(!t.active||t.isOpen||t.flagged)return;
   if(t.isDanger){this.loseRun('危険岩盤を掘り抜いて洞窟が崩壊した～');return;}
   X.reveal(x,y,S.digClock);DD.ui.refreshHud();
 };
-DD.systems.applyDamage=function(raw){base.applyDamage.call(this,raw*(1-X.gear('pendant')*.05));};
+DD.systems.applyDamage=function(raw){const hp=S.player.hp;base.applyDamage.call(this,raw*(1-X.gear('pendant')*.05));if(S.player.hp<hp&&S.player.hp>0)S.devilRescue=true;};
 DD.systems.applyUpgrade=function(key,id){
   if(!X.canUpgrade(key))return;
   const before=X.lv(key),actors=key==='castSpeed'?[...S.dwarfActors]:key==='devil'?[...S.devils]:key==='golem'&&S.guard?[S.guard]:[];
