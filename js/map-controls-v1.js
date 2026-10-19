@@ -50,7 +50,7 @@ const bindInput=DD.main.bindCanvasInput;
 DD.main.bindCanvasInput=function(){
   bindInput.call(this);const canvas=S.canvas;let gesture=null,lastTap=null,pendingTap=null,suppressUntil=0;
   const cell=e=>{const r=canvas.getBoundingClientRect();return{x:Math.floor(((e.clientX-r.left)*canvas.width/r.width-C.boardRect.x)/C.TILE),y:Math.floor(((e.clientY-r.top)*canvas.height/r.height-C.boardRect.y)/C.TILE)};};
-  const canAct=()=>S.mode!=='lost'&&S.mode!=='won'&&(!S.paused||S.pauseReason==='item');
+  const canAct=()=>S.mode!=='lost'&&S.mode!=='won'&&(!S.paused||S.pauseReason==='item'||(S.pauseReason==='bossIntro'&&V.hand));
   const cancel=()=>{if(gesture)clearTimeout(gesture.timer);gesture=null;};
   const tap=(g,e)=>{
     if(!canAct()||S.board!==g.board||!U.inBounds(g.x,g.y))return;

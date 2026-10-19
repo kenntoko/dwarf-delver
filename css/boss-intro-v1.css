@@ -1,0 +1,5 @@
+#bossIntro[hidden]{display:none}
+#bossIntro{position:absolute;inset:0;z-index:26;display:grid;place-items:center;pointer-events:none;text-align:center;font-family:BossDot,GuiDot,monospace;color:#fff1d1}
+#bossIntro>div{width:90%;max-width:520px;padding:20px 12px;background:rgba(18,17,22,.92);border-top:3px solid #b89251;border-bottom:3px solid #b89251;box-shadow:0 5px 0 #09080a,0 -5px 0 #09080a}
+#bossIntro p{font:inherit;font-size:clamp(16px,2.3vw,24px);line-height:1.7;margin:0 0 10px;color:#ffcf77}
+#bossIntro span{font-size:clamp(12px,1.6vw,16px);line-height:1.5}
