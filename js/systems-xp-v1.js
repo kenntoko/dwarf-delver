@@ -203,6 +203,8 @@ DD.systems = {
     if (S.mode === 'boss') return ['slime', 'bat', 'goblin'];
     if (S.floor === 1) return ['slime'];
     if (S.floor === 2) return ['slime', 'bat'];
+    // B3F: 9/20 slime, 9/20 bat, 2/20 goblin.
+    if (S.floor === 3) return [...Array(9).fill('slime'), ...Array(9).fill('bat'), ...Array(2).fill('goblin')];
     return ['slime', 'bat', 'goblin'];
   },
   frontierSpawnTiles(enemyType = null) {
