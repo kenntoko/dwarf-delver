@@ -10,7 +10,16 @@
 <link rel="stylesheet" href="./css/map-controls-v1.css?v=map-touch-1">
 </head>
 <body>
-<main id="app">
+<link rel="stylesheet" href="./css/title-screen-v1.css?v=title-1">
+<section id="titleScreen" class="title-screen" aria-labelledby="titleHeading">
+  <div class="title-panel">
+    <h1 id="titleHeading">DWARF<br>DELVER</h1>
+    <p class="title-version">PRE-RELEASE</p>
+    <div class="title-hero" aria-hidden="true"></div>
+    <button id="startGameButton" type="button" aria-label="ゲーム開始">START GAME</button>
+  </div>
+</section>
+<main id="app" hidden>
   <div id="boardWrap" aria-label="Dwarf Delver ゲーム画面">
     <header class="game-hud" id="gameHud">
       <div class="floor-row"><div id="phasePill" class="meter-number floor-readout" aria-label="B1F"></div>
@@ -76,6 +85,7 @@
   <script src="./js/map-controls-v1.js?v=map-touch-1"></script>
   <script src="./js/bat-animation-v1.js?v=bat-animation-1"></script>
   <script src="./js/goblin-animation-v1.js?v=goblin-native32-1"></script>
+  <script src="./js/title-screen-v1.js?v=title-1"></script>
 
 </body>
 </html>

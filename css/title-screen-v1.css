@@ -1,0 +1,10 @@
+#app[hidden]{display:none!important}
+.title-screen{min-height:100svh;box-sizing:border-box;display:flex;align-items:center;justify-content:center;padding:24px 16px;background:#100e14;color:#fff1d1;font-family:GuiDot,monospace;text-align:center}
+.title-panel{width:min(480px,100%);box-sizing:border-box;padding:32px 20px;border:4px solid #947749;background:#211c24;box-shadow:0 0 0 4px #09080c,inset 0 0 0 4px #302934}
+.title-panel h1{font-family:GuiDot,monospace;font-size:clamp(28px,7vw,44px);line-height:1.3;color:#f5cb77;margin:0;text-shadow:3px 3px #09080c;letter-spacing:1px}
+.title-version{font-size:12px;letter-spacing:2px;color:#b4a48b;margin:12px 0 0}
+.title-hero{width:192px;height:192px;margin:12px auto;background:url('../assets/hero_breath_sheet_v2.png') no-repeat 0 0;background-size:auto 192px;image-rendering:pixelated}
+#startGameButton{font-family:GuiDot,monospace;font-size:20px;color:#fff1d1;background:#5c362d;border:3px solid #e2b368;border-radius:0;padding:18px 24px;min-height:60px;cursor:pointer;box-shadow:4px 4px #09080c}
+#startGameButton:hover,#startGameButton:focus-visible{background:#80503a;outline:3px solid #fff1d1;outline-offset:5px}
+#startGameButton:active{box-shadow:1px 1px #09080c}
+@media(max-height:600px){.title-panel{padding:16px}.title-hero{width:96px;height:96px;background-size:auto 96px;margin:8px auto}.title-screen{padding:12px}}
