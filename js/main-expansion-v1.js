@@ -3,7 +3,6 @@ DD.main = {
   bindCanvasInput() {
     const canvas = DD.state.canvas;
     let blockDoubleClick = false;
-    let pendingCoin = null;
     let doubleTarget = null;
     const cellAt = (e) => {
       const rect = canvas.getBoundingClientRect();
@@ -41,14 +40,6 @@ DD.main = {
         DD.systems.openChest(gx, gy); return;
       }
       if (e.button === 0 && tile.isOpen) {
-        const rect = canvas.getBoundingClientRect();
-        const x = (e.clientX - rect.left) * canvas.width / rect.width;
-        const y = (e.clientY - rect.top) * canvas.height / rect.height;
-        const canChord = tile.number > 0 && DD.utils.neighbors8(gx, gy).filter(([nx,ny]) => S.board.grid[ny][nx].flagged).length === tile.number;
-        if (canChord) {
-          if (pendingCoin) { clearTimeout(pendingCoin); pendingCoin = null; }
-          if (e.detail === 1) { const board = S.board; pendingCoin = setTimeout(() => { pendingCoin = null; if (S.board === board) DD.expansion.fireCoins(x,y); }, 220); }
-        } else DD.expansion.fireCoins(x,y);
         return;
       }
       if (!DD.board.validDigTarget(S.board, gx, gy, S.mode)) return;
@@ -56,7 +47,6 @@ DD.main = {
       DD.ui.refreshHud();
     });
     canvas.addEventListener('dblclick', (e) => {
-      if (pendingCoin) { clearTimeout(pendingCoin); pendingCoin = null; }
       if (e.button !== 0 || blockDoubleClick) return;
       const { x, y } = cellAt(e);
       if (!DD.utils.inBounds(x, y)) return;

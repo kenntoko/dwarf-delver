@@ -51,17 +51,16 @@ DD.main.bindCanvasInput=function(){
   bindInput.call(this);const canvas=S.canvas;let gesture=null,lastTap=null,pendingTap=null,suppressUntil=0;
   const cell=e=>{const r=canvas.getBoundingClientRect();return{x:Math.floor(((e.clientX-r.left)*canvas.width/r.width-C.boardRect.x)/C.TILE),y:Math.floor(((e.clientY-r.top)*canvas.height/r.height-C.boardRect.y)/C.TILE)};};
   const canAct=()=>S.mode!=='lost'&&S.mode!=='won'&&(!S.paused||S.pauseReason==='item'||(S.pauseReason==='bossIntro'&&V.hand));
-  const cancel=()=>{if(gesture)clearTimeout(gesture.timer);gesture=null;};
+  const cancel=()=>{if(gesture)clearTimeout(gesture.timer);DD.coinHold?.endTouch();gesture=null;};
   const tap=(g,e)=>{
     if(!canAct()||S.board!==g.board||!U.inBounds(g.x,g.y))return;
     const t=S.board.grid[g.y][g.x];if(!t.active)return;
     if(S.itemMode){DD.systems.applyItemToCell(S.itemMode,g.x,g.y);return;}
     if(t.isOpen&&t.chest){DD.systems.openChest(g.x,g.y);return;}
     if(t.isOpen){
-      const r=canvas.getBoundingClientRect(),x=(e.clientX-r.left)*canvas.width/r.width,y=(e.clientY-r.top)*canvas.height/r.height;
       if(t.number>0){const key=U.key(g.x,g.y),now=performance.now();if(lastTap?.key===key&&now-lastTap.time<320&&lastTap.board===S.board){clearTimeout(pendingTap);pendingTap=null;lastTap=null;DD.systems.chordTile(g.x,g.y);DD.ui.refreshHud();return;}
-        clearTimeout(pendingTap);lastTap={key,time:now,board:S.board};const board=S.board;pendingTap=setTimeout(()=>{pendingTap=null;lastTap=null;if(S.board===board)DD.expansion.fireCoins(x,y);},320);
-      }else DD.expansion.fireCoins(x,y);return;
+        clearTimeout(pendingTap);lastTap={key,time:now,board:S.board};pendingTap=setTimeout(()=>{pendingTap=null;lastTap=null;},320);
+      }return;
     }
     lastTap=null;if(DD.board.validDigTarget(S.board,g.x,g.y,S.mode)){DD.systems.openTile(g.x,g.y);DD.ui.refreshHud();}
   };
@@ -73,9 +72,10 @@ DD.main.bindCanvasInput=function(){
     if(gesture){cancel();return;}if(!e.isPrimary||!canAct())return;
     canvas.setPointerCapture(e.pointerId);const c=cell(e);gesture={...c,id:e.pointerId,board:S.board,startX:e.clientX,startY:e.clientY,px:e.clientX,py:e.clientY,hand:V.hand,moved:false,held:false};const g=gesture;
     if(!g.hand&&!S.itemMode&&U.inBounds(c.x,c.y)&&!S.board.grid[c.y][c.x].isOpen)g.timer=setTimeout(()=>{if(gesture!==g||g.moved||!canAct()||S.board!==g.board||S.itemMode)return;g.held=true;lastTap=null;clearTimeout(pendingTap);DD.systems.toggleFlag(g.x,g.y);DD.ui.refreshHud();},450);
+    if(!g.hand&&!S.itemMode&&U.inBounds(c.x,c.y)&&S.board.grid[c.y][c.x].active&&S.board.grid[c.y][c.x].isOpen&&!S.board.grid[c.y][c.x].chest)g.timer=setTimeout(()=>{if(gesture!==g||g.moved||!canAct()||S.board!==g.board||S.itemMode)return;g.held=true;lastTap=null;clearTimeout(pendingTap);DD.coinHold?.beginTouch(g);},1000);
   },{passive:false});
-  canvas.addEventListener('pointermove',e=>{const g=gesture;if(!g||g.id!==e.pointerId)return;e.preventDefault();if(Math.hypot(e.clientX-g.startX,e.clientY-g.startY)>9){g.moved=true;clearTimeout(g.timer);}if(g.hand)V.pan(e.clientX-g.px,e.clientY-g.py);g.px=e.clientX;g.py=e.clientY;},{passive:false});
-  canvas.addEventListener('pointerup',e=>{const g=gesture;if(!g||g.id!==e.pointerId)return;e.preventDefault();suppressUntil=performance.now()+900;clearTimeout(g.timer);gesture=null;if(!g.hand&&!g.moved&&!g.held)tap(g,e);},{passive:false});
+  canvas.addEventListener('pointermove',e=>{const g=gesture;if(!g||g.id!==e.pointerId)return;e.preventDefault();if(Math.hypot(e.clientX-g.startX,e.clientY-g.startY)>9){g.moved=true;clearTimeout(g.timer);DD.coinHold?.endTouch(g.id);}if(g.hand)V.pan(e.clientX-g.px,e.clientY-g.py);g.px=e.clientX;g.py=e.clientY;},{passive:false});
+  canvas.addEventListener('pointerup',e=>{const g=gesture;if(!g||g.id!==e.pointerId)return;e.preventDefault();suppressUntil=performance.now()+900;clearTimeout(g.timer);DD.coinHold?.endTouch(g.id);gesture=null;if(!g.hand&&!g.moved&&!g.held)tap(g,e);},{passive:false});
   canvas.addEventListener('pointercancel',cancel);canvas.addEventListener('lostpointercapture',cancel);
   window.addEventListener('blur',()=>{cancel();clearTimeout(pendingTap);lastTap=null;});
 };

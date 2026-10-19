@@ -1,0 +1,24 @@
+@font-face{font-family:ResultDot;src:url('../assets/result-ui-dot.ttf') format('truetype');font-display:block}
+#floorResult[hidden]{display:none}
+#floorResult{position:absolute;inset:0;z-index:210;background:rgba(8,7,11,.9);display:grid;place-items:center;padding:10px;font-family:ResultDot,GuiDot,monospace;color:#fff0ce}
+.result-card{width:min(660px,100%);max-height:100%;overflow-y:auto;overscroll-behavior:contain;background:#292018;border:3px solid #c49b55;padding:14px;box-shadow:inset 0 0 0 3px #493622;line-height:1.5}
+.result-card h1{font:inherit;font-size:22px;color:#ffcf71;margin:0 0 8px;text-align:center}
+.result-character{display:flex;gap:12px;align-items:center;border-bottom:2px solid #705536;padding-bottom:8px}
+#resultPortrait{width:96px;height:96px;flex:0 0 96px;image-rendering:pixelated;background:url('../assets/hero_breath_sheet_v2.png') no-repeat 0 0;background-size:288px 192px}
+#resultPortrait.is-bored{background-image:url('../assets/hero_yawn_sheet_v2.png');background-size:384px 192px;background-position:-288px -96px}
+#resultSpeech{font-size:16px;margin:0;color:#ffe2a0}
+#resultStats{font-size:14px;margin:8px 0}
+#resultStats>div{display:flex;justify-content:space-between;gap:12px;padding:2px 0;border-bottom:1px solid #473524}
+#resultStats dt{min-width:0}#resultStats dd{margin:0;text-align:right;white-space:nowrap}
+.result-reward{color:#a5e7a8}
+.result-wallet{display:flex;justify-content:space-between;gap:10px;align-items:center;background:#151515;padding:6px 10px;border:2px solid #a88a51;font-size:16px}
+#resultBalance{font-weight:normal;color:#ffe184;font-size:24px}
+#resultLifetime,#resultGachaHint{font-size:12px;color:#cbb99a;margin:6px 0}
+.result-card button{width:100%;min-height:44px;margin:6px 0 0;border:2px solid #d6ab61;border-radius:0;font:inherit;font-size:16px;cursor:pointer;color:#ffedc2;background:#643f30;padding:8px}
+.result-card button:hover,.result-card button:focus-visible{background:#895136;outline:2px solid #fff1d1;outline-offset:2px}
+.result-card button:disabled{opacity:.45;cursor:default}
+#resultNext{background:#334d44;border-color:#a1c6ab}
+#resultDrawReward[hidden]{display:none}
+#resultDrawReward{display:flex;gap:10px;align-items:center;margin-top:8px;padding:8px;background:#151a18;border:2px solid #75866a;font-size:14px}
+#resultDrawReward img{image-rendering:pixelated;flex:0 0 48px}#resultDrawReward p{margin:4px 0 0;font-size:12px}
+@media(max-width:480px){.result-card{padding:10px}.result-card h1{font-size:18px}#resultSpeech{font-size:14px}#resultStats{font-size:12px}#resultPortrait{flex-basis:96px}.result-character{gap:4px}}

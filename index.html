@@ -10,6 +10,7 @@
 <link rel="stylesheet" href="./css/map-controls-v1.css?v=map-touch-1">
 <link rel="stylesheet" href="./css/boss-hud-v1.css?v=boss-intro-1">
 <link rel="stylesheet" href="./css/boss-intro-v1.css?v=boss-intro-1">
+<link rel="stylesheet" href="./css/floor-result-v1.css?v=floor-result-1">
 </head>
 <body>
 <link rel="stylesheet" href="./css/title-screen-v1.css?v=title-2">
@@ -57,8 +58,8 @@
           <div class="menu-future"><button disabled>設定</button><button disabled>諦める</button></div>
           <details class="menu-extra"><summary>操作・フロア情報・ログ</summary>
             <p>Dwarf Delver Pre-release</p>
-            <p>未開拓を左クリック：採掘<br>開拓済みを左クリック：銭投げ（1枚1スコア）<br>宝箱をクリック：3択から取得<br>右クリック：危険看板<br>数字をダブルクリック：周囲を一括採掘（旗数一致時）<br>N：次階層へ／Esc：閉じる・キャンセル</p>
-            <p>スマホ：タップで採掘／長押しで危険看板／数字をダブルタップで一括採掘。<br>1×・2×・4×：マップの拡大。手のボタンをオンにしてドラッグで画面移動。矢印でも移動できます。</p>
+            <p>未開拓を左クリック：採掘<br>SPACE長押し：カーソルへ銭投げ（Lv1は3秒間隔）<br>宝箱をクリック：3択から取得<br>右クリック：危険看板<br>数字をダブルクリック：周囲を一括採掘（旗数一致時）<br>N：次階層へ／Esc：閉じる・キャンセル</p>
+            <p>スマホ：タップで採掘／未探索マスの長押しで危険看板／開いたマスを1秒長押しで銭投げ／数字をダブルタップで一括採掘。<br>1×・2×・4×：マップの拡大。手のボタンをオンにしてドラッグで画面移動。矢印でも移動できます。</p>
             <p id="statusText"></p><div id="floorInfo"></div><div id="log"></div>
           </details>
         </div>
@@ -83,8 +84,8 @@
   <link rel="stylesheet" href="./css/debug-panel-v1.css">
   <script src="./js/debug-panel-v1.js?v=debug-panel-1"></script>
   <script src="./js/hud-overlay-v1.js?v=map-touch-1"></script>
-  <script src="./js/main-expansion-v1.js?v=chord-anchor-1"></script>
-  <script src="./js/map-controls-v1.js?v=boss-intro-1"></script>
+  <script src="./js/main-expansion-v1.js?v=coin-hold-1"></script>
+  <script src="./js/map-controls-v1.js?v=coin-hold-1"></script>
   <script src="./js/bat-animation-v1.js?v=bat-animation-1"></script>
   <script src="./js/goblin-animation-v1.js?v=goblin-native32-1"></script>
   <script src="./js/title-screen-v1.js?v=title-1"></script>
@@ -96,6 +97,8 @@
   <script src="./js/boss-swarm-v1.js?v=boss-swarm-1"></script>
   <script src="./js/boss-first-dig-v1.js?v=boss-first-dig-1"></script>
   <script src="./js/boss-intro-v1.js?v=boss-intro-1"></script>
+  <script src="./js/floor-result-v1.js?v=floor-result-1"></script>
+  <script src="./js/coin-hold-v1.js?v=coin-hold-1"></script>
 
 </body>
 </html>
