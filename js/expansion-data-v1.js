@@ -44,7 +44,7 @@ for (const [key,name] of Object.entries(DD.expansion.skillNames)) {
   DD.data.upgradeDefs[key]={name,max:5,getDesc(lv){return DD.expansion.skillDescription(key,lv);}};
   DD.state.player.upgrades[key]=key==='coin'?1:0;
 }
-DD.data.itemDefs.survey.desc='選択した未探索マスの周囲8マスにある危険岩盤へ、危険看板を立てる。';
+DD.data.itemDefs.survey.desc='選択した未探索マスを含む周囲9マスの危険岩盤すべてに、危険看板を立てる。';
 DD.data.itemDefs.reinforce.desc='選択した未探索マスを、危険岩盤でも安全な岩盤でも安全に破壊して開く。';
 delete DD.data.itemDefs.clairvoyance;
 delete DD.state.inventory.clairvoyance;

@@ -798,12 +798,12 @@ DD.systems = {
     if (itemKey === 'survey') {
       S.inventory[itemKey] -= 1;
       let count = 0;
-      DD.utils.neighbors8(x, y).forEach(([nx, ny]) => {
+      [[x, y], ...DD.utils.neighbors8(x, y)].forEach(([nx, ny]) => {
         const nt = board.grid[ny][nx];
         if (nt.active && !nt.isOpen && nt.isDanger) { nt.flagged = true; count++; }
       });
       tile.surveyCount = null;
-      this.addLog(`地質調査：周囲8マスの危険岩盤 ${count} 個に危険看板を立てた～`, 'good');
+      this.addLog(`地質調査：選択マスを含む9マスの危険岩盤 ${count} 個に危険看板を立てた～`, 'good');
     }
     this.consumeItemUnit(itemKey);
     DD.ui.clearItemMode();
