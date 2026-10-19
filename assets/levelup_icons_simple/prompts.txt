@@ -1,0 +1,18 @@
+Use case: stylized-concept. Asset: tiny practical RPG UI icon. Extremely SIMPLE FLAT PIXEL ART, designed on a very coarse 16 by 16 logical pixel grid, later displayed as 32 by 32. ONE large clear silhouette. Think early 8-bit inventory symbols, not detailed illustration. At most 5 solid colors total including a dark navy outline. Large flat color regions; ONE highlight block at most. Every detail must be at least 2 logical pixels wide. NO texture, NO dithering, NO gradients, NO tiny scattered glints, NO ornate gold ornamentation, NO realistic lighting, NO floating particles, NO decorative border, NO antialiasing, NO letters. Centered and filling almost all the square, small empty margin. Genuinely transparent background. This must remain instantly identifiable at actual 32px. Subject: 
+
+projectilePower: One large round PURPLE magic orb with a single large white diamond highlight. A small simple gold cap at the top only. Bold circular silhouette, rich magical power.
+
+castSpeed: One large CYAN lightning bolt with just two short horizontal cyan speed bars to its left. Extremely minimal fast spell casting symbol.
+
+summon: ONE front-facing cartoon dwarf SPIRIT HEAD ONLY: broad yellow mining helmet, two dark square eyes on a blue face, HUGE triangular WHITE BEARD filling the lower half. One large GREEN PLUS symbol at upper right. No body, no tools, no second dwarf, no sparks. Face must be very big and readable.
+
+vitality: One big triangular slice of CAKE: white cream top, pink cake layer, red strawberry on top. No plate, no fork, no extra decorations. Three broad horizontal layers and one large strawberry.
+
+scoutEye: One large simple MAGNIFYING GLASS with a dark blue handle, a gold ring and one solid cyan diamond crystal centered inside the lens. No rock chunks, no extra gems, no sparks.
+
+xpBoost: One large OPEN BOOK with cream pages and blue cover, one bold GREEN UP ARROW rising from its middle. No text or thin page lines. Three simple shapes only.
+
+defense: One simple RED noble dress silhouette with wide bell-shaped skirt, short puff sleeves and one large IVORY bow at waist. No embroidery, no trim patterns, no jewelry, no cape. Clearly clothing.
+
+summon expression edit:
+Edit this dwarf spirit icon only. Keep its very simple coarse pixel-art style, yellow mining helmet, BLUE face, huge white beard, green plus sign, dark navy outline, transparent background, composition, and large readable silhouette. Change ONLY facial expression: clearly SAD and timid, a downtrodden overworked little spirit. Two large slanted eyebrows raised toward the center, heavy drooping half-closed dark eyes looking downward, a small visibly downturned mouth above the beard. One simple large cyan tear on one cheek if it helps. No smile, no angry eyebrows, no injury or bruising. Do not add texture or small details. Expression must read at actual 32x32. This is a practical minimal game UI sprite, flat color blocks. Keep transparency.
