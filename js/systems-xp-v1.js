@@ -788,8 +788,13 @@ DD.systems = {
     if (itemKey === 'reinforce') {
       S.inventory[itemKey] -= 1;
       if (tile.isDanger) {
+        tile.wasDanger = true;
         tile.isDanger = false;
-        DD.board.recomputeNumbers(board);
+        // Retain the surrounding numbers as a record of the original danger layout.
+        tile.number = DD.utils.neighbors8(x, y).filter(([nx, ny]) => {
+          const neighbor = board.grid[ny][nx];
+          return neighbor.active && (neighbor.isDanger || neighbor.wasDanger);
+        }).length;
       }
       tile.reinforced = true;
       tile.flagged = false;

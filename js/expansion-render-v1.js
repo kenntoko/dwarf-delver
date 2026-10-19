@@ -3,7 +3,7 @@ const X=DD.expansion,S=DD.state,R=DD.render,T=DD.config.TILE;
 X.images={};
 const originalLoad=DD.assets.load;
 DD.assets.load=function(){
-  const extra=['devil','golem','maid'].map(key=>new Promise(resolve=>{const img=new Image();img.onload=img.onerror=resolve;img.src='./assets/expansion/'+key+'_sheet.png';X.images[key]=img;}));
+  const extra=['devil','golem','maid','reinforce-frame'].map(key=>new Promise(resolve=>{const img=new Image();img.onload=img.onerror=resolve;img.src=key==='reinforce-frame'?'./assets/expansion/reinforce-frame-v1.png':'./assets/expansion/'+key+'_sheet.png';X.images[key]=img;}));
   return Promise.all([originalLoad.call(this),...extra]);
 };
 X.drawSprite=function(key,frame,a,offsetY=0,flip=false){
@@ -38,7 +38,12 @@ X.drawArea=function(){
     ctx.fillStyle='#f8d561';ctx.fillRect(d.x+8,d.y-15,5,5);ctx.fillStyle='#182035';ctx.fillRect(d.x-13,d.y+16,26,3);ctx.fillStyle='#83dcee';ctx.fillRect(d.x-13,d.y+16,26*Math.max(0,d.hp/d.maxHp),3);ctx.restore();
   }
 };
-const boardDraw=R.drawBoard;R.drawBoard=function(){boardDraw.call(this);X.drawArea();};
+const boardDraw=R.drawBoard;R.drawBoard=function(){boardDraw.call(this);
+  const image=X.images['reinforce-frame'],ctx=S.ctx;
+  if(image?.complete&&image.naturalWidth){ctx.save();ctx.imageSmoothingEnabled=false;
+    for(let y=0;y<DD.config.H;y++)for(let x=0;x<DD.config.W;x++){const tile=S.board.grid[y][x];if(tile.active&&tile.isOpen&&tile.reinforced)ctx.drawImage(image,DD.config.boardRect.x+x*T,DD.config.boardRect.y+y*T,T,T);}
+    ctx.restore();}
+  X.drawArea();};
 const playerDraw=R.drawPlayerAndDwarves;R.drawPlayerAndDwarves=function(){playerDraw.call(this);X.drawCompanions();};
 const magicDraw=R.drawProjectiles;
 R.drawProjectiles=function(){
