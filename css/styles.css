@@ -205,3 +205,7 @@ canvas {
 .chest-reward{position:relative;z-index:2;color:#24190f;border:0;box-shadow:none;background:transparent;max-width:480px}
 .chest-reward-icon{width:128px;height:128px;image-rendering:pixelated;display:block;margin:auto}
 .chest-reward button{display:block;width:240px;max-width:100%;margin:20px auto 0;background:#f1dfb8;color:#24190f;border:2px solid #7e6037;border-radius:0}
+
+/* The map stays visible; only the item flies to the inventory. */
+#lootDialog.loot-flight{display:block;background:transparent;padding:0;pointer-events:none}
+.chest-flying-item{position:fixed;width:32px;height:32px;image-rendering:pixelated;transform:translate(-50%,-50%);pointer-events:none}

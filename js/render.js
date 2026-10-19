@@ -177,6 +177,18 @@ DD.render = {
       }
     }
   },
+  drawOpeningChest() {
+    const S = DD.state, event = S.activeChest;
+    if (!event || S.pauseReason !== 'chest') return;
+    const sheet = DD.assets.get('treasure_chest_sheet');
+    if (!sheet || !sheet.complete || !sheet.naturalWidth) return;
+    const ctx = S.ctx, p = DD.utils.tileCenter(event.x, event.y);
+    const frame = Math.min(7, Math.floor(event.age / 0.05));
+    ctx.save(); ctx.imageSmoothingEnabled = false;
+    ctx.drawImage(sheet, frame % 4 * 64, Math.floor(frame / 4) * 64, 64, 64,
+      Math.round(p.x - 21), Math.round(p.y - 23), 42, 42);
+    ctx.restore();
+  },
   drawDungeonEntrance() {
     const S = DD.state;
     if (S.mode !== 'dungeon' || !S.board || !S.board.entry || S.board.floorNum !== 1) return;
@@ -414,6 +426,7 @@ DD.render = {
     if (DD.state.mode === 'boss') this.drawEnemies();
     this.drawBoard();
     this.drawDungeonEntrance();
+    this.drawOpeningChest();
     if (DD.state.mode !== 'boss') this.drawEnemies();
     this.drawGoblinSignMeters();
     this.drawProjectiles();

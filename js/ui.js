@@ -90,48 +90,65 @@ DD.ui = {
   startChestOpening() {
     const S = DD.state, box = S.dom.lootDialog;
     S.paused = true; S.pauseReason = 'chest';
-    box.innerHTML = '<div class="chest-stage" role="dialog" aria-modal="true" aria-label="宝箱を開けています">' +
-      '<canvas id="chestOpeningCanvas" width="256" height="256" aria-hidden="true"></canvas>' +
-      '<div id="chestWhiteout" aria-hidden="true"></div>' +
-      '<div id="chestReward" class="pixel-item-ui chest-reward" hidden></div></div>';
-    box.classList.add('show', 'chest-cinematic');
-    box.tabIndex = -1; box.focus();
+    box.innerHTML = '<img id="chestFlyingItem" class="chest-flying-item" src="' +
+      this.itemIcon(S.activeChest.key) + '" alt="" hidden>';
+    box.classList.add('show', 'loot-flight');
     this.updateChestOpening(0); this.refreshHud();
+  },
+  chestFlightTarget(key) {
+    const S = DD.state;
+    const unit = (S.itemUnits || []).find(u => u.key === key);
+    const existing = unit && S.dom.inventoryDock.querySelector('button[data-unit="' + unit.id + '"] img');
+    if (existing) {
+      const r = existing.getBoundingClientRect();
+      return { x: r.left + r.width / 2, y: r.top + r.height / 2 };
+    }
+    const order = ['reinforce', 'survey', 'clairvoyance', 'heal'];
+    const keys = order.filter(k => S.inventory[k] > 0 || k === key);
+    const index = keys.indexOf(key), r = S.canvas.getBoundingClientRect();
+    // 40px slots, 4px gaps, and the dock's 8px right / 6px top inset.
+    return { x: r.right - 8 - 20 - (keys.length - 1 - index) * 44, y: r.top + 6 + 20 };
+  },
+  chestFlightPosition(age, source, target) {
+    const rise = 24;
+    if (age < 0.55) {
+      const t = Math.max(0, Math.min(1, (age - 0.30) / 0.25));
+      return { x: source.x, y: source.y - rise * (1 - Math.pow(1 - t, 3)) };
+    }
+    const t = Math.max(0, Math.min(1, (age - 0.55) / 0.70));
+    // Easing applies only to the explicitly requested item flight.
+    const p = t < 0.5 ? 4 * t * t * t : 1 - Math.pow(-2 * t + 2, 3) / 2;
+    const from = { x: source.x, y: source.y - rise };
+    const control = { x: (from.x + target.x) / 2,
+      y: Math.min(from.y, target.y) - Math.min(90, Math.abs(target.x - from.x) * 0.12 + 32) };
+    return { x: (1-p)*(1-p)*from.x + 2*(1-p)*p*control.x + p*p*target.x,
+      y: (1-p)*(1-p)*from.y + 2*(1-p)*p*control.y + p*p*target.y };
   },
   updateChestOpening(dt) {
     const S = DD.state, event = S.activeChest;
     if (!event || S.pauseReason !== 'chest') return;
     event.age += dt;
-    const canvas = document.getElementById('chestOpeningCanvas');
-    const sheet = DD.assets.get('treasure_chest_sheet');
-    if (canvas && sheet && sheet.complete && sheet.naturalWidth > 0) {
-      const ctx = canvas.getContext('2d');
-      const frame = Math.min(7, Math.floor(Math.max(0, event.age - 0.35) / 0.12));
-      ctx.clearRect(0, 0, 256, 256); ctx.imageSmoothingEnabled = false;
-      ctx.drawImage(sheet, frame % 4 * 64, Math.floor(frame / 4) * 64, 64, 64, 0, 0, 256, 256);
+    const icon = document.getElementById('chestFlyingItem');
+    if (icon) {
+      icon.hidden = event.age < 0.30;
+      const r = S.canvas.getBoundingClientRect();
+      const center = DD.utils.tileCenter(event.x, event.y);
+      const source = { x: r.left + center.x * r.width / S.canvas.width,
+        y: r.top + (center.y - 7) * r.height / S.canvas.height };
+      const pos = this.chestFlightPosition(event.age, source, this.chestFlightTarget(event.key));
+      icon.style.left = pos.x + 'px'; icon.style.top = pos.y + 'px';
     }
-    // Deliberate stepped whiteout; the chest itself only changes sprite frames.
-    const whiteout = document.getElementById('chestWhiteout');
-    if (whiteout) whiteout.style.opacity = Math.min(4, Math.max(0, Math.floor((event.age - 1.3) / 0.075))) / 4;
-    if (event.age >= 1.85 && !event.rewardGranted) {
+    if (event.age >= 1.25 && !event.rewardGranted) {
       event.rewardGranted = true;
       DD.systems.grantChestItem(event.key);
-      const reward = document.getElementById('chestReward');
-      canvas.hidden = true;
-      reward.innerHTML = '<img class="chest-reward-icon" src="' + this.itemIcon(event.key) +
-        '" alt=""><p>宝箱から入手しました</p><p>' + DD.data.itemDefs[event.key].name +
-        ' ×1</p><button class="messageButton" id="chestRewardOk">OK</button>';
-      reward.hidden = false;
-      document.getElementById('chestRewardOk').onclick = () => this.finishChestOpening();
-      document.getElementById('chestRewardOk').focus();
-      this.refreshHud();
+      this.finishChestOpening();
     }
   },
   finishChestOpening() {
     const S = DD.state;
     if (S.pauseReason !== 'chest' || !S.activeChest || !S.activeChest.rewardGranted) return;
     S.activeChest = null;
-    S.dom.lootDialog.classList.remove('show', 'chest-cinematic'); S.dom.lootDialog.innerHTML = '';
+    S.dom.lootDialog.classList.remove('show', 'loot-flight'); S.dom.lootDialog.innerHTML = '';
     S.paused = false; S.pauseReason = ''; S.lastTimeStamp = 0;
     this.resumePendingDialogs(); this.refreshHud();
   },

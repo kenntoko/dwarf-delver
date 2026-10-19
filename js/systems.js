@@ -131,7 +131,7 @@ DD.systems = {
     const tile = S.board.grid[y][x];
     if (!tile.active || !tile.isOpen || !tile.chest) return;
     tile.chest = false;
-    S.activeChest = { key: DD.utils.choice(Object.keys(DD.data.itemDefs)), age: 0, rewardGranted: false };
+    S.activeChest = { x, y, key: DD.utils.choice(Object.keys(DD.data.itemDefs)), age: 0, rewardGranted: false };
     DD.ui.startChestOpening();
   },
   grantChestItem(item) {
