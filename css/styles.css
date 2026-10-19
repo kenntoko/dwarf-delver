@@ -279,3 +279,6 @@ body{line-height:1.5}
 /* LvUp assets: 32px source, integer 2x display; mobile uses native 32px. */
 .choice-icon{width:64px;height:64px;image-rendering:pixelated}
 @media(max-width:520px){.choice-icon{width:32px;height:32px}}
+
+/* Keep Lv and score together; push only time to the right edge. */
+.run-stats #timeText{margin-left:auto}
