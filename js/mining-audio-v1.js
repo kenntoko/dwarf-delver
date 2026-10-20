@@ -1,5 +1,5 @@
 (() => {
-  let context, buffer, rubble, sign, batHurt, slimeHurt, levelUp, loading, last = -Infinity, lastSign = -Infinity, lastBatHurt = -Infinity, lastSlimeHurt = -Infinity, lastLevelUp = -Infinity, voice, slideVoice;
+  let context, buffer, rubble, sign, batHurt, slimeHurt, levelUp, scoreCoin, scoreSettle, loading, last = -Infinity, lastSign = -Infinity, lastBatHurt = -Infinity, lastSlimeHurt = -Infinity, lastLevelUp = -Infinity, lastCoin = -Infinity, voice, slideVoice, coinVoice, settleVoice;
   let batch = 0, timer = null, board = null, slideUntil = 0;
   const AudioContext = window.AudioContext || window.webkitAudioContext;
   function unlock() {
@@ -7,16 +7,37 @@
     try {
       context ||= new AudioContext();
       if (context.state === 'suspended') context.resume().catch(() => {});
-      if (!loading) loading = Promise.all(['mining','rockslide-8bit-gorogoro-v3-eq','sign-place-to-v6','bat-hurt-v1','slime-hurt-v1','level-up'].map(name =>
-        fetch('./assets/audio/'+name+'.wav')
+      if (!loading) loading = Promise.all(['mining','rockslide-8bit-gorogoro-v3-eq','sign-place-to-v6','bat-hurt-v1','slime-hurt-v1','level-up','score-coin','score-settle'].map(name =>
+        fetch('./assets/audio/'+name+(name==='score-settle'?'.mp3':'.wav'))
         .then(r => { if (!r.ok) throw new Error('Audio unavailable'); return r.arrayBuffer(); })
         .then(bytes => context.decodeAudioData(bytes))))
-        .then(decoded => { [buffer,rubble,sign,batHurt,slimeHurt,levelUp] = decoded; })
+        .then(decoded => { [buffer,rubble,sign,batHurt,slimeHurt,levelUp,scoreCoin,scoreSettle] = decoded; })
         .catch(() => { loading = null; });
     } catch (_) { /* Audio must never interrupt gameplay. */ }
   }
   document.addEventListener('pointerdown', unlock, {capture:true, passive:true});
   document.addEventListener('keydown', unlock, {capture:true});
+  DD.audio ||= {};
+  DD.audio.playCoin = function() {
+    if (!scoreCoin || context?.state !== 'running' || document.hidden) return;
+    const now = context.currentTime;
+    if (now - lastCoin < .1) return;
+    lastCoin = now;
+    if (coinVoice) { try { coinVoice.stop(); } catch (_) {} }
+    coinVoice = context.createBufferSource();
+    coinVoice.buffer = scoreCoin;
+    coinVoice.connect(context.destination);
+    coinVoice.start();
+  };
+  DD.audio.playScoreSettle = function() {
+    if (!scoreSettle || context?.state !== 'running' || document.hidden) return;
+    if (coinVoice) { try { coinVoice.stop(); } catch (_) {} coinVoice=null; }
+    if (settleVoice) { try { settleVoice.stop(); } catch (_) {} }
+    settleVoice=context.createBufferSource();
+    settleVoice.buffer=scoreSettle;
+    settleVoice.connect(context.destination);
+    settleVoice.start();
+  };
   function play(count) {
     if (!buffer || context.state !== 'running' || document.hidden) return;
     const now = context.currentTime;

@@ -1,6 +1,6 @@
 (() => {
 const S=DD.state,X=DD.expansion,UI=DD.ui,U=DD.utils;
-const R=DD.results={active:null,record:null,busy:false,history:[],config:{baseCost:300,costStep:100,completeReward:3000}};
+const R=DD.results={active:null,record:null,busy:false,countup:null,history:[],config:{baseCost:300,costStep:100,completeReward:3000}};
 S.totalScoreEarned=0;S.gachaDraws=0;
 R.money=n=>Number((Math.round((n||0)*10)/10).toFixed(1)).toLocaleString('ja-JP');
 R.cost=()=>R.config.baseCost+R.config.costStep*S.gachaDraws;
@@ -39,7 +39,7 @@ R.settle=function(){
   if(record.settled)return record.settled;
   const opened=S.board.grid.flat().filter(t=>t.active&&t.isOpen&&!t.isDanger&&!t.wasDanger).length;
   const total=record.safeTotal,complete=total>0&&opened===total;
-  const result={floor:record.floor,nextFloor:record.floor+1,time:S.floorTimer,opened,total,rate:total?opened/total*100:0,kills:record.kills,earned:record.earned,coinSpent:record.coinSpent,exploreBonus:R.bonus(opened,total),clearReward:complete?R.config.completeReward:0,complete,gachaSpent:0,draws:0};
+  const result={floor:record.floor,nextFloor:record.floor+1,time:S.floorTimer,opened,total,rate:total?opened/total*100:0,kills:record.kills,earned:record.earned,coinSpent:record.coinSpent,exploreBonus:R.bonus(opened,total),clearReward:complete?R.config.completeReward:0,complete,gachaSpent:0,draws:0,balanceBefore:S.score||0};
   record.settled=result;R.history.push(result);
   const reward=result.exploreBonus+result.clearReward;
   // Settlement amounts are exact rewards, unaffected by the exploration wallet multiplier.
@@ -65,8 +65,37 @@ R.grant=function(type,key){
   }finally{Object.assign(S,saved);}
   return X.lv(key)===before+1;
 };
+R.finishCountup=function(){
+  const animation=R.countup;if(!animation)return;
+  R.countup=null;
+  if(animation.frame!=null&&typeof cancelAnimationFrame==='function')cancelAnimationFrame(animation.frame);
+  document.getElementById('resultBalance').textContent=R.money(S.score);
+  DD.audio?.playScoreSettle?.();
+};
+R.startCountup=function(){
+  const r=R.active,reward=r&&(r.exploreBonus+r.clearReward);
+  if(!(reward>0)||typeof requestAnimationFrame!=='function')return;
+  const animation=R.countup={from:r.balanceBefore,to:S.score,displayed:r.balanceBefore,duration:Math.min(1400,650+Math.sqrt(reward)*10),start:null,lastChime:-Infinity,frame:null};
+  const step=now=>{
+    if(R.countup!==animation||R.active!==r)return;
+    if(animation.start===null)animation.start=now;
+    const progress=Math.min(1,(now-animation.start)/animation.duration);
+    const eased=1-(1-progress)**3;
+    const previous=animation.displayed;
+    animation.displayed=animation.from+(animation.to-animation.from)*eased;
+    document.getElementById('resultBalance').textContent=R.money(animation.displayed);
+    if(animation.displayed>previous+.01&&now-animation.lastChime>=130){
+      DD.audio?.playCoin?.();animation.lastChime=now;
+    }
+    if(progress<1)animation.frame=requestAnimationFrame(step);
+    else { R.countup=null; DD.audio?.playScoreSettle?.(); }
+  };
+  document.getElementById('resultBalance').textContent=R.money(animation.displayed);
+  animation.frame=requestAnimationFrame(step);
+};
 R.draw=function(){
   if(!R.active||R.busy||S.pauseReason!=='result')return false;
+  R.finishCountup();
   const cost=R.cost(),pools=R.pools();if(S.score+1e-8<cost||!pools.length)return false;
   R.busy=true;
   try{
@@ -88,11 +117,12 @@ DD.systems.nextFloor=function(){
   UI.closeExitPrompt();S.paused=true;S.pauseReason='result';
   R.active=R.settle();
   if(!R.active){S.paused=false;S.pauseReason='';return;}
-  R.render();document.getElementById('floorResult').hidden=false;
+  R.render();document.getElementById('floorResult').hidden=false;R.startCountup();
   document.getElementById('resultNext').focus({preventScroll:true});UI.refreshHud();
 };
 R.depart=function(){
   if(!R.active||R.busy)return false;
+  R.finishCountup();
   R.active=null;document.getElementById('floorResult').hidden=true;
   S.paused=false;S.pauseReason='';S.lastTimeStamp=0;
   next.call(DD.systems);return true;
@@ -110,7 +140,7 @@ R.render=function(){
   el('resultSpeech').textContent=r.complete?'全部掘って、報酬も全部いただき！':r.rate>=75?'ふふん、よく働いたじゃない。お代はいただくわ！':r.rate>=25?'まずまずね。もっと稼いでもよかったのに！':'もう帰るの？ 次はもっと稼ぎなさいよね。';
   el('resultPortrait').classList.toggle('is-bored',r.rate<25);
   el('resultStats').innerHTML=row('踏破時間',UI.formatTime(r.time))+row('開拓した安全マス',`${r.opened} / ${r.total} マス`)+row('開拓率',`${r.rate.toFixed(1)}％`)+row('撃破した敵',`${r.kills} 体`)+row('探索で獲得したスコア',`＋${money(r.earned)}`)+row('銭投げの消費',`−${money(r.coinSpent)}`)+row('開拓ボーナス',`＋${money(r.exploreBonus)}`,true)+row('マインスイーパー完全クリア報酬',`＋${money(r.clearReward)}`,true);
-  el('resultBalance').textContent=money(S.score);
+  el('resultBalance').textContent=money(R.countup?.displayed??S.score);
   el('resultLifetime').textContent=`累計獲得：${money(S.totalScoreEarned)}　／　今回のガチャ消費：${money(r.gachaSpent)}`;
   el('resultGacha').textContent=`ボーナスガチャ　${money(R.cost())} スコア`;
   el('resultGacha').disabled=R.busy||S.score+1e-8<R.cost()||!R.pools().length;
