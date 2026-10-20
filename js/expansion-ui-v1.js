@@ -1,14 +1,24 @@
 (() => {
 const X=DD.expansion,S=DD.state,UI=DD.ui;
-const base={bindDom:UI.bindDom,refreshHud:UI.refreshHud,upgradeIcon:UI.upgradeIcon,inspectDescription:UI.inspectDescription,updateChestOpening:UI.updateChestOpening};
+const base={bindDom:UI.bindDom,refreshHud:UI.refreshHud,upgradeIcon:UI.upgradeIcon,itemIcon:UI.itemIcon,inspectDescription:UI.inspectDescription,updateChestOpening:UI.updateChestOpening};
 UI.upgradeIcon=function(key){
+  const reviewed={projectilePower:'icon_projectilePower-approved-v2.png',castSpeed:'icon_castSpeed-approved-v2.png',vitality:'icon_vitality-approved-v2.png'};
+  if(reviewed[key])return './assets/expansion/'+reviewed[key];
   if(key==='bump')return './assets/expansion/icon_bump-approved-v2.png';
   if(key==='devil')return './assets/expansion/icon_devil-contract-approved-v1.png';
   if(key==='perfume')return './assets/expansion/icon_perfume-approved-v2.png';
   if(key==='coin'||key==='resonance'||key==='decoy')return './assets/expansion/icon_'+key+'-approved-v1.png';
   return X.skillNames[key]?'./assets/expansion/icon_'+key+'.png':base.upgradeIcon.call(this,key);
 };
-X.equipmentIcon=key=>key==='pendant'?'./assets/expansion/icon_pendant-approved-v2.png':'./assets/expansion/icon_'+key+'.png';
+UI.itemIcon=function(key){
+  if(key==='reinforce')return './assets/expansion/icon_reinforce-approved-v1.png';
+  return base.itemIcon.call(this,key);
+};
+X.equipmentIcon=key=>{
+  const reviewed={ring:'icon_ring-approved-v1.png',mirror:'icon_mirror-approved-v1.png',whip:'icon_whip-approved-v1.png',megaphone:'icon_megaphone-approved-v1.png',wallet:'icon_wallet-approved-v1.png'};
+  if(reviewed[key])return './assets/expansion/'+reviewed[key];
+  return key==='pendant'?'./assets/expansion/icon_pendant-approved-v2.png':'./assets/expansion/icon_'+key+'.png';
+};
 X.renderEquipment=function(){
   const slotCount=document.getElementById('bonusSlotCount');if(slotCount)slotCount.textContent='追加ボーナス '+this.bonusKeys().length+' / 5';
   const keys=Object.keys(S.equipment||{}),signature=keys.map(k=>k+':'+S.equipment[k]).join(',');
