@@ -1,5 +1,5 @@
 (() => {
-  let context, buffer, rubble, sign, batHurt, slimeHurt, levelUp, scoreCoin, scoreSettle, loading, last = -Infinity, lastSign = -Infinity, lastBatHurt = -Infinity, lastSlimeHurt = -Infinity, lastLevelUp = -Infinity, lastCoin = -Infinity, voice, slideVoice, coinVoice, settleVoice;
+  let context, buffer, rubble, sign, batHurt, slimeHurt, redSlimeHurt, goblinHurt, levelUp, scoreCoin, scoreSettle, loading, last = -Infinity, lastSign = -Infinity, lastBatHurt = -Infinity, lastSlimeHurt = -Infinity, lastRedSlimeHurt = -Infinity, lastGoblinHurt = -Infinity, lastLevelUp = -Infinity, lastCoin = -Infinity, voice, slideVoice, coinVoice, settleVoice;
   let batch = 0, timer = null, board = null, slideUntil = 0;
   const AudioContext = window.AudioContext || window.webkitAudioContext;
   function unlock() {
@@ -7,11 +7,11 @@
     try {
       context ||= new AudioContext();
       if (context.state === 'suspended') context.resume().catch(() => {});
-      if (!loading) loading = Promise.all(['mining','rockslide-8bit-gorogoro-v3-eq','sign-place-to-v6','bat-hurt-v1','slime-hurt-v1','level-up','score-coin','score-settle'].map(name =>
+      if (!loading) loading = Promise.all(['mining','rockslide-8bit-gorogoro-v3-eq','sign-place-to-v6','bat-hurt-v1','slime-hurt-v1','red-slime-hurt-v1','goblin-hurt-v1','level-up','score-coin','score-settle'].map(name =>
         fetch('./assets/audio/'+name+(name==='score-settle'?'.mp3':'.wav'))
         .then(r => { if (!r.ok) throw new Error('Audio unavailable'); return r.arrayBuffer(); })
         .then(bytes => context.decodeAudioData(bytes))))
-        .then(decoded => { [buffer,rubble,sign,batHurt,slimeHurt,levelUp,scoreCoin,scoreSettle] = decoded; })
+        .then(decoded => { [buffer,rubble,sign,batHurt,slimeHurt,redSlimeHurt,goblinHurt,levelUp,scoreCoin,scoreSettle] = decoded; })
         .catch(() => { loading = null; });
     } catch (_) { /* Audio must never interrupt gameplay. */ }
   }
@@ -111,6 +111,26 @@
         lastSlimeHurt = now;
         const source = context.createBufferSource();
         source.buffer = slimeHurt;
+        source.connect(context.destination);
+        source.start();
+      }
+    }
+    if (enemy?.type === 'redSlime' && actual > 0 && redSlimeHurt && context?.state === 'running' && !document.hidden) {
+      const now = context.currentTime;
+      if (now - lastRedSlimeHurt >= .09) {
+        lastRedSlimeHurt = now;
+        const source = context.createBufferSource();
+        source.buffer = redSlimeHurt;
+        source.connect(context.destination);
+        source.start();
+      }
+    }
+    if (enemy?.type === 'goblin' && actual > 0 && goblinHurt && context?.state === 'running' && !document.hidden) {
+      const now = context.currentTime;
+      if (now - lastGoblinHurt >= .09) {
+        lastGoblinHurt = now;
+        const source = context.createBufferSource();
+        source.buffer = goblinHurt;
         source.connect(context.destination);
         source.start();
       }
