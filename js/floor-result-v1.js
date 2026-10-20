@@ -135,11 +135,12 @@ R.rewardInfo=function(reward){
 R.render=function(){
   const r=R.active;if(!r)return;
   const el=id=>document.getElementById(id),money=R.money;
-  const row=(label,value,positive=false)=>`<div${positive?' class="result-reward"':''}><dt>${label}</dt><dd>${value}</dd></div>`;
+  const row=(label,value,kind='')=>`<div${kind?' class="result-'+kind+'"':''}><dt>${label}</dt><dd>${value}</dd></div>`;
   el('resultTitle').textContent=`B${r.floor}F おかねの精算`;
   el('resultSpeech').textContent=r.complete?'全部掘って、報酬も全部いただき！':r.rate>=75?'ふふん、よく働いたじゃない。お代はいただくわ！':r.rate>=25?'まずまずね。もっと稼いでもよかったのに！':'もう帰るの？ 次はもっと稼ぎなさいよね。';
   el('resultPortrait').classList.toggle('is-bored',r.rate<25);
-  el('resultStats').innerHTML=row('踏破時間',UI.formatTime(r.time))+row('開拓した安全マス',`${r.opened} / ${r.total} マス`)+row('開拓率',`${r.rate.toFixed(1)}％`)+row('撃破した敵',`${r.kills} 体`)+row('探索で獲得したスコア',`＋${money(r.earned)}`)+row('銭投げの消費',`−${money(r.coinSpent)}`)+row('開拓ボーナス',`＋${money(r.exploreBonus)}`,true)+row('マインスイーパー完全クリア報酬',`＋${money(r.clearReward)}`,true);
+  const net=r.earned+r.exploreBonus+r.clearReward-r.coinSpent;
+  el('resultStats').innerHTML=row('探索で獲得したスコア',`＋${money(r.earned)}`)+row('開拓ボーナス',`＋${money(r.exploreBonus)}`)+row('マインスイーパー完全クリア報酬',`＋${money(r.clearReward)}`)+row('銭投げ経費',`−${money(r.coinSpent)}`,'expense')+row('今回の収支',`${net<0?'−':'＋'}${money(Math.abs(net))}`,'net');
   el('resultBalance').textContent=money(R.countup?.displayed??S.score);
   el('resultLifetime').textContent=`累計獲得：${money(S.totalScoreEarned)}　／　今回のガチャ消費：${money(r.gachaSpent)}`;
   el('resultGacha').textContent=`ボーナスガチャ　${money(R.cost())} スコア`;
@@ -154,7 +155,7 @@ const bind=UI.bindDom;
 UI.bindDom=function(){
   bind.call(this);
   const layer=document.createElement('div');layer.id='floorResult';layer.hidden=true;
-  layer.innerHTML='<section class="result-card" role="dialog" aria-modal="true" aria-labelledby="resultTitle"><h1 id="resultTitle"></h1><div class="result-character"><div id="resultPortrait" aria-hidden="true"></div><p id="resultSpeech"></p></div><dl id="resultStats"></dl><div class="result-wallet">現在の所持スコア <strong id="resultBalance"></strong></div><p id="resultLifetime"></p><button id="resultGacha" type="button"></button><p id="resultGachaHint"></p><div id="resultDrawReward" aria-live="polite" hidden></div><button id="resultNext" type="button"></button></section>';
+  layer.innerHTML='<section class="result-card" role="dialog" aria-modal="true" aria-labelledby="resultTitle"><div class="result-receipt"><h1 id="resultTitle"></h1><dl id="resultStats"></dl><div class="result-wallet"><span>現在の所持スコア</span><strong id="resultBalance"></strong></div><button id="resultGacha" type="button"></button><p id="resultGachaHint"></p><div id="resultDrawReward" aria-live="polite" hidden></div><p id="resultLifetime"></p></div><div class="result-character"><div class="result-character-top"><p id="resultSpeech"></p><button id="resultNext" type="button"></button></div><div class="result-portrait-stage"><div id="resultPortrait" aria-hidden="true"></div></div></div></section>';
   document.getElementById('boardWrap').append(layer);
   document.getElementById('resultGacha').addEventListener('click',()=>R.draw());
   document.getElementById('resultNext').addEventListener('click',()=>R.depart());
