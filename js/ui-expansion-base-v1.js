@@ -252,7 +252,11 @@ DD.ui = {
   },
 
 
-  upgradeIcon(key) { return './assets/levelup_icons_simple/' + (key === 'summon' ? 'summon_soul_plus' : key) + '.png'; },
+  upgradeIcon(key) {
+    const file = key === 'summon' ? 'summon_soul_plus' :
+      (key === 'scoutEye' || key === 'defense') ? key + '-approved-v2' : key;
+    return './assets/levelup_icons_simple/' + file + '.png';
+  },
   formatTime(seconds) {
     const s = Math.max(0, Math.floor(seconds || 0));
     return String(Math.floor(s / 60)).padStart(2, '0') + ':' + String(s % 60).padStart(2, '0');

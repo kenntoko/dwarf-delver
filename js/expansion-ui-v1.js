@@ -1,8 +1,11 @@
 (() => {
 const X=DD.expansion,S=DD.state,UI=DD.ui;
 const base={bindDom:UI.bindDom,refreshHud:UI.refreshHud,upgradeIcon:UI.upgradeIcon,inspectDescription:UI.inspectDescription,updateChestOpening:UI.updateChestOpening};
-UI.upgradeIcon=function(key){return X.skillNames[key]?'./assets/expansion/icon_'+key+'.png':base.upgradeIcon.call(this,key);};
-X.equipmentIcon=key=>'./assets/expansion/icon_'+key+'.png';
+UI.upgradeIcon=function(key){
+  if(key==='perfume')return './assets/expansion/icon_perfume-approved-v2.png';
+  return X.skillNames[key]?'./assets/expansion/icon_'+key+'.png':base.upgradeIcon.call(this,key);
+};
+X.equipmentIcon=key=>key==='pendant'?'./assets/expansion/icon_pendant-approved-v2.png':'./assets/expansion/icon_'+key+'.png';
 X.renderEquipment=function(){
   const slotCount=document.getElementById('bonusSlotCount');if(slotCount)slotCount.textContent='追加ボーナス '+this.bonusKeys().length+' / 5';
   const keys=Object.keys(S.equipment||{}),signature=keys.map(k=>k+':'+S.equipment[k]).join(',');
