@@ -2,6 +2,7 @@
 const X=DD.expansion,S=DD.state,UI=DD.ui;
 const base={bindDom:UI.bindDom,refreshHud:UI.refreshHud,upgradeIcon:UI.upgradeIcon,inspectDescription:UI.inspectDescription,updateChestOpening:UI.updateChestOpening};
 UI.upgradeIcon=function(key){
+  if(key==='devil')return './assets/expansion/icon_devil-contract-approved-v1.png';
   if(key==='perfume')return './assets/expansion/icon_perfume-approved-v2.png';
   if(key==='coin'||key==='resonance'||key==='decoy')return './assets/expansion/icon_'+key+'-approved-v1.png';
   return X.skillNames[key]?'./assets/expansion/icon_'+key+'.png':base.upgradeIcon.call(this,key);
