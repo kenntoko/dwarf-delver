@@ -9,7 +9,7 @@ DD.expansion = {
     golem: [[4,12,2,2],[5,16,3,1.9],[6,20,4,1.8],[7,24,5,1.7],[8,28,6,1.6]],
     decoy: [[1,30,.10],[2,25,.12],[3,20,.14],[4,15,.16],[5,10,.18]]
   },
-  skillNames: {coin:'銭投げ',perfume:'高級香水',bump:'精霊の体当たり',resonance:'共振',devil:'悪魔契約',golem:'警備委託',maid:'専属メイド',decoy:'宝箱トラップ'},
+  skillNames: {coin:'銭投げ',perfume:'高級香水',bump:'精霊の体当たり',resonance:'共振',devil:'小悪魔契約',golem:'警備委託',maid:'専属メイド',decoy:'宝箱トラップ'},
   equipmentDefs: {
     ring:{name:'貫通の指輪',desc:lv=>`飛び道具の貫通 +${lv}回`},
     mirror:{name:'跳弾の手鏡',desc:lv=>`飛び道具の壁反射 +${lv}回`},
