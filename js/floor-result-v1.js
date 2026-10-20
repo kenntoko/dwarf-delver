@@ -1,6 +1,6 @@
 (() => {
 const S=DD.state,X=DD.expansion,UI=DD.ui,U=DD.utils;
-const R=DD.results={active:null,record:null,busy:false,countup:null,history:[],config:{baseCost:300,costStep:100,completeReward:3000}};
+const R=DD.results={active:null,record:null,busy:false,pending:null,countup:null,history:[],config:{baseCost:300,costStep:100,completeReward:3000}};
 S.totalScoreEarned=0;S.gachaDraws=0;
 R.money=n=>Number((Math.round((n||0)*10)/10).toFixed(1)).toLocaleString('ja-JP');
 R.cost=()=>R.config.baseCost+R.config.costStep*S.gachaDraws;
@@ -29,7 +29,7 @@ X.hit=function(enemy,raw){
 };
 const begin=DD.systems.beginFloor;
 DD.systems.beginFloor=function(floor){
-  R.record=null;
+  R.record=null;R.pending=null;
   const result=begin.call(this,floor);
   R.record={board:S.board,floor,safeTotal:S.board.grid.flat().filter(t=>t.active&&!t.isDanger&&!t.wasDanger).length,earned:0,coinSpent:0,kills:0,settled:null};
   return result;
@@ -93,18 +93,40 @@ R.startCountup=function(){
   document.getElementById('resultBalance').textContent=R.money(animation.displayed);
   animation.frame=requestAnimationFrame(step);
 };
+R.pickOffers=function(){
+  let pools=R.pools().map(pool=>({type:pool.type,keys:[...pool.keys]}));
+  if(!pools.length)return [];
+  const offers=[];
+  for(let i=0;i<3;i++){
+    let available=pools.filter(pool=>pool.keys.length);
+    if(!available.length){pools=R.pools().map(pool=>({type:pool.type,keys:[...pool.keys]}));available=pools.filter(pool=>pool.keys.length);}
+    const pool=U.choice(available),key=U.choice(pool.keys);
+    pool.keys.splice(pool.keys.indexOf(key),1);
+    offers.push({type:pool.type,key});
+  }
+  return offers;
+};
 R.draw=function(){
-  if(!R.active||R.busy||S.pauseReason!=='result')return false;
+  if(!R.active||R.busy||R.pending||S.pauseReason!=='result')return false;
   R.finishCountup();
-  const cost=R.cost(),pools=R.pools();if(S.score+1e-8<cost||!pools.length)return false;
+  const cost=R.cost();if(S.score+1e-8<cost)return false;
+  const offers=R.pickOffers();if(offers.length!==3)return false;
   R.busy=true;
   try{
-    const pool=U.choice(pools),key=U.choice(pool.keys);
-    if(!R.grant(pool.type,key))return false;
     S.score-=cost;S.gachaDraws++;R.active.gachaSpent+=cost;R.active.draws++;
-    R.active.lastReward={type:pool.type,key};
+    R.active.lastReward=null;R.pending=offers;
     return true;
-  }finally{R.busy=false;R.render();UI.refreshHud();}
+  }finally{R.busy=false;R.render();R.renderChoices();UI.refreshHud();if(R.pending)document.querySelector?.('#resultChoiceOptions button')?.focus({preventScroll:true});}
+};
+R.choose=function(index){
+  if(!R.active||R.busy||!R.pending||S.pauseReason!=='result')return false;
+  const offer=R.pending[index];if(!offer)return false;
+  R.busy=true;
+  try{
+    if(!R.grant(offer.type,offer.key))return false;
+    R.active.lastReward=offer;R.pending=null;
+    return true;
+  }finally{R.busy=false;R.render();R.renderChoices();UI.refreshHud();if(!R.pending)(document.getElementById('resultGacha').disabled?document.getElementById('resultNext'):document.getElementById('resultGacha')).focus({preventScroll:true});}
 };
 const update=DD.systems.update;
 DD.systems.update=function(dt){if(R.active)return;return update.call(this,dt);};
@@ -121,7 +143,7 @@ DD.systems.nextFloor=function(){
   document.getElementById('resultNext').focus({preventScroll:true});UI.refreshHud();
 };
 R.depart=function(){
-  if(!R.active||R.busy)return false;
+  if(!R.active||R.busy||R.pending)return false;
   R.finishCountup();
   R.active=null;document.getElementById('floorResult').hidden=true;
   S.paused=false;S.pauseReason='';S.lastTimeStamp=0;
@@ -131,6 +153,20 @@ R.rewardInfo=function(reward){
   if(reward.type==='upgrade')return{name:DD.data.upgradeDefs[reward.key].name,icon:UI.upgradeIcon(reward.key),detail:`Lv${X.lv(reward.key)}：${DD.data.upgradeDefs[reward.key].getDesc(X.lv(reward.key))}`};
   if(reward.type==='equipment')return{name:X.equipmentDefs[reward.key].name,icon:X.equipmentIcon(reward.key),detail:`Lv${X.gear(reward.key)}：${X.equipmentDefs[reward.key].desc(X.gear(reward.key))}`};
   return{name:DD.data.itemDefs[reward.key].name,icon:UI.itemIcon(reward.key),detail:DD.data.itemDefs[reward.key].desc};
+};
+R.offerInfo=function(reward){
+  if(reward.type==='upgrade'){const level=X.lv(reward.key)+1;return{name:DD.data.upgradeDefs[reward.key].name,icon:UI.upgradeIcon(reward.key),detail:`Lv${level}：${DD.data.upgradeDefs[reward.key].getDesc(level)}`};}
+  if(reward.type==='equipment'){const level=X.gear(reward.key)+1;return{name:X.equipmentDefs[reward.key].name,icon:X.equipmentIcon(reward.key),detail:`Lv${level}：${X.equipmentDefs[reward.key].desc(level)}`};}
+  return{name:DD.data.itemDefs[reward.key].name,icon:UI.itemIcon(reward.key),detail:DD.data.itemDefs[reward.key].desc};
+};
+R.renderChoices=function(){
+  const layer=document.getElementById('resultChoiceLayer');if(!layer)return;
+  layer.hidden=!R.pending;
+  const options=document.getElementById('resultChoiceOptions');
+  options.innerHTML=R.pending?R.pending.map((offer,index)=>{
+    const info=R.offerInfo(offer);
+    return `<button type="button" data-choice-index="${index}"><img src="${info.icon}" width="48" height="48" alt=""><span><strong>${info.name}</strong><small>${info.detail}</small></span></button>`;
+  }).join(''):'';
 };
 R.render=function(){
   const r=R.active;if(!r)return;
@@ -144,9 +180,10 @@ R.render=function(){
   el('resultBalance').textContent=money(R.countup?.displayed??S.score);
   el('resultLifetime').textContent=`累計獲得：${money(S.totalScoreEarned)}　／　今回のガチャ消費：${money(r.gachaSpent)}`;
   el('resultGacha').textContent=`ボーナスガチャ　${money(R.cost())} スコア`;
-  el('resultGacha').disabled=R.busy||S.score+1e-8<R.cost()||!R.pools().length;
-  if(el('resultGacha').disabled&&document.activeElement===el('resultGacha'))el('resultNext').focus({preventScroll:true});
-  el('resultGachaHint').textContent=S.score+1e-8<R.cost()?'スコアが足りないわ。次の階で稼ぎなさい！':'消費アイテム・LvUpボーナス・装備を同じ確率で抽選。引くたびに＋100。';
+  el('resultGacha').disabled=R.busy||!!R.pending||S.score+1e-8<R.cost()||!R.pools().length;
+  el('resultNext').disabled=!!R.pending;
+  if(el('resultGacha').disabled&&!R.pending&&document.activeElement===el('resultGacha'))el('resultNext').focus({preventScroll:true});
+  el('resultGachaHint').textContent=R.pending?'3つの中から1つ選んでね。':S.score+1e-8<R.cost()?'スコアが足りないわ。次の階で稼ぎなさい！':'消費アイテム・LvUpボーナス・装備を同じ確率で抽選。引くたびに＋100。';
   el('resultNext').textContent=`B${r.nextFloor}Fへ進む`;
   const reward=el('resultDrawReward');
   if(r.lastReward){const info=R.rewardInfo(r.lastReward);reward.innerHTML=`<img src="${info.icon}" width="48" height="48" alt=""><div><strong>${info.name} を獲得！</strong><p>${info.detail}</p></div>`;reward.hidden=false;}else{reward.innerHTML='';reward.hidden=true;}
@@ -155,14 +192,15 @@ const bind=UI.bindDom;
 UI.bindDom=function(){
   bind.call(this);
   const layer=document.createElement('div');layer.id='floorResult';layer.hidden=true;
-  layer.innerHTML='<section class="result-card" role="dialog" aria-modal="true" aria-labelledby="resultTitle"><div class="result-receipt"><h1 id="resultTitle"></h1><dl id="resultStats"></dl><div class="result-wallet"><span>現在の所持スコア</span><strong id="resultBalance"></strong></div><button id="resultGacha" type="button"></button><p id="resultGachaHint"></p><div id="resultDrawReward" aria-live="polite" hidden></div><p id="resultLifetime"></p></div><div class="result-character"><div class="result-character-top"><p id="resultSpeech"></p><button id="resultNext" type="button"></button></div><div class="result-portrait-stage"><div id="resultPortrait" aria-hidden="true"></div></div></div></section>';
+  layer.innerHTML='<section class="result-card" role="dialog" aria-modal="true" aria-labelledby="resultTitle"><div class="result-receipt"><h1 id="resultTitle"></h1><dl id="resultStats"></dl><div class="result-wallet"><span>現在の所持スコア</span><strong id="resultBalance"></strong></div><button id="resultGacha" type="button"></button><p id="resultGachaHint"></p><div id="resultDrawReward" aria-live="polite" hidden></div><p id="resultLifetime"></p></div><div class="result-character"><div class="result-character-top"><p id="resultSpeech"></p><button id="resultNext" type="button"></button></div><div class="result-portrait-stage"><div id="resultPortrait" aria-hidden="true"></div></div></div></section><div id="resultChoiceLayer" class="result-choice-layer" hidden><section class="result-choice-card" role="dialog" aria-modal="true" aria-labelledby="resultChoiceTitle"><h2 id="resultChoiceTitle">ボーナスをひとつ選ぶ</h2><p>3つの候補から1つを獲得します</p><div id="resultChoiceOptions"></div></section></div>';
   document.getElementById('boardWrap').append(layer);
   document.getElementById('resultGacha').addEventListener('click',()=>R.draw());
   document.getElementById('resultNext').addEventListener('click',()=>R.depart());
+  document.getElementById('resultChoiceOptions').addEventListener('click',e=>{const button=e.target.closest('button[data-choice-index]');if(button)R.choose(Number(button.dataset.choiceIndex));});
   layer.addEventListener('keydown',e=>{
     if(e.key==='Escape'){e.preventDefault();e.stopPropagation();}
     if(e.key==='Tab'){
-      const buttons=[...layer.querySelectorAll('button:not(:disabled)')],first=buttons[0],last=buttons.at(-1);
+      const buttons=R.pending?[...document.getElementById('resultChoiceOptions').querySelectorAll('button')]:[...layer.querySelectorAll('.result-card button:not(:disabled)')],first=buttons[0],last=buttons.at(-1);
       if(e.shiftKey&&document.activeElement===first){e.preventDefault();last.focus();}
       else if(!e.shiftKey&&document.activeElement===last){e.preventDefault();first.focus();}
     }
