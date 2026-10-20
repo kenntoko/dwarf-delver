@@ -748,8 +748,8 @@ DD.systems = {
     }
     if (!candidates.length) return;
     const [x,y] = DD.utils.choice(candidates);
-    S.board.grid[y][x].autoHint = true;
-    this.addLog('探索の眼が安全なマスを見つけた～', 'good');
+    this.openTile(x,y);
+    this.addLog('鉱脈調査が安全なマスを開拓した～', 'good');
   },
   applyUpgrade(key, choiceId) {
     const S = DD.state;

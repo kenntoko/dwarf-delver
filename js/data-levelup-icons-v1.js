@@ -16,9 +16,10 @@ DD.data = {
     castSpeed: { name: '高速詠唱', max: 5, getDesc(lv){ return `魔法弾の発射間隔 -0.2秒（現在Lv${lv}）`; } },
     summon: { name: '奴隷調達', max: 5, getDesc(lv){ return `ドワーフ精霊 +1体（現在Lv${lv}）`; } },
     vitality: { name: 'ご褒美スイーツ', max: 5, getDesc(lv){ return `最大HP +20、HP20回復（現在Lv${lv}）`; } },
-    scoutEye: { name: '鉱脈調査', max: 5, getDesc(lv){ return `安全マスを自動探知（現在Lv${lv}）`; } },
+    scoutEye: { name: '鉱脈調査', max: 5, getDesc(lv){ return `${DD.data.scoutIntervals[lv]}秒ごとに安全マスを1つ自動開拓（現在Lv${lv}）`; } },
     xpBoost: { name: '英才教育', max: 5, getDesc(lv){ return `獲得XP +10%（現在Lv${lv}）`; } },
     defense: { name: '素敵なお召し物', max: 5, getDesc(lv){ return `被ダメージ -8%（現在Lv${lv}）`; } }
   },
   scoutIntervals: [Infinity, 45, 35, 25, 18, 12]
 };
+

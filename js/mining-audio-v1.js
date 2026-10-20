@@ -1,5 +1,5 @@
 (() => {
-  let context, buffer, rubble, sign, batHurt, slimeHurt, redSlimeHurt, goblinHurt, levelUp, scoreCoin, scoreSettle, loading, last = -Infinity, lastSign = -Infinity, lastBatHurt = -Infinity, lastSlimeHurt = -Infinity, lastRedSlimeHurt = -Infinity, lastGoblinHurt = -Infinity, lastLevelUp = -Infinity, lastCoin = -Infinity, voice, slideVoice, coinVoice, settleVoice;
+  let context, buffer, rubble, sign, batHurt, slimeHurt, redSlimeHurt, goblinHurt, levelUp, scoreCoin, scoreSettle, loading, last = -Infinity, lastSign = -Infinity, lastLevelUp = -Infinity, lastCoin = -Infinity, voice, slideVoice, coinVoice, settleVoice;
   let batch = 0, timer = null, board = null, slideUntil = 0;
   const AudioContext = window.AudioContext || window.webkitAudioContext;
   function unlock() {
@@ -37,6 +37,15 @@
     settleVoice.buffer=scoreSettle;
     settleVoice.connect(context.destination);
     settleVoice.start();
+  };
+  DD.audio.playEnemyDeath = function(type) {
+    if (context?.state !== 'running' || document.hidden) return;
+    const sound = {bat:batHurt,slime:slimeHurt,redSlime:redSlimeHurt,goblin:goblinHurt}[type];
+    if (!sound) return;
+    const source = context.createBufferSource();
+    source.buffer = sound;
+    source.connect(context.destination);
+    source.start();
   };
   function play(count) {
     if (!buffer || context.state !== 'running' || document.hidden) return;
@@ -94,47 +103,9 @@
   };
   const hit = DD.expansion.hit;
   DD.expansion.hit = function(enemy,damage) {
+    const wasAlive=!!enemy?.alive;
     const actual = hit.call(this,enemy,damage);
-    if (enemy?.type === 'bat' && actual > 0 && batHurt && context?.state === 'running' && !document.hidden) {
-      const now = context.currentTime;
-      if (now - lastBatHurt >= .09) {
-        lastBatHurt = now;
-        const source = context.createBufferSource();
-        source.buffer = batHurt;
-        source.connect(context.destination);
-        source.start();
-      }
-    }
-    if (enemy?.type === 'slime' && actual > 0 && slimeHurt && context?.state === 'running' && !document.hidden) {
-      const now = context.currentTime;
-      if (now - lastSlimeHurt >= .09) {
-        lastSlimeHurt = now;
-        const source = context.createBufferSource();
-        source.buffer = slimeHurt;
-        source.connect(context.destination);
-        source.start();
-      }
-    }
-    if (enemy?.type === 'redSlime' && actual > 0 && redSlimeHurt && context?.state === 'running' && !document.hidden) {
-      const now = context.currentTime;
-      if (now - lastRedSlimeHurt >= .09) {
-        lastRedSlimeHurt = now;
-        const source = context.createBufferSource();
-        source.buffer = redSlimeHurt;
-        source.connect(context.destination);
-        source.start();
-      }
-    }
-    if (enemy?.type === 'goblin' && actual > 0 && goblinHurt && context?.state === 'running' && !document.hidden) {
-      const now = context.currentTime;
-      if (now - lastGoblinHurt >= .09) {
-        lastGoblinHurt = now;
-        const source = context.createBufferSource();
-        source.buffer = goblinHurt;
-        source.connect(context.destination);
-        source.start();
-      }
-    }
+    if(wasAlive&&enemy.alive===false&&actual>0)DD.audio.playEnemyDeath(enemy.type);
     return actual;
   };
   const offerLevelChoices = DD.ui.offerLevelChoices;
