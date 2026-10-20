@@ -1,5 +1,5 @@
 (() => {
-  let context, buffer, rubble, sign, batHurt, slimeHurt, loading, last = -Infinity, lastSign = -Infinity, lastBatHurt = -Infinity, lastSlimeHurt = -Infinity, voice, slideVoice;
+  let context, buffer, rubble, sign, batHurt, slimeHurt, levelUp, loading, last = -Infinity, lastSign = -Infinity, lastBatHurt = -Infinity, lastSlimeHurt = -Infinity, lastLevelUp = -Infinity, voice, slideVoice;
   let batch = 0, timer = null, board = null, slideUntil = 0;
   const AudioContext = window.AudioContext || window.webkitAudioContext;
   function unlock() {
@@ -7,11 +7,11 @@
     try {
       context ||= new AudioContext();
       if (context.state === 'suspended') context.resume().catch(() => {});
-      if (!loading) loading = Promise.all(['mining','rockslide-8bit-gorogoro-v3-eq','sign-place-to-v6','bat-hurt-v1','slime-hurt-v1'].map(name =>
+      if (!loading) loading = Promise.all(['mining','rockslide-8bit-gorogoro-v3-eq','sign-place-to-v6','bat-hurt-v1','slime-hurt-v1','level-up'].map(name =>
         fetch('./assets/audio/'+name+'.wav')
         .then(r => { if (!r.ok) throw new Error('Audio unavailable'); return r.arrayBuffer(); })
         .then(bytes => context.decodeAudioData(bytes))))
-        .then(decoded => { [buffer,rubble,sign,batHurt,slimeHurt] = decoded; })
+        .then(decoded => { [buffer,rubble,sign,batHurt,slimeHurt,levelUp] = decoded; })
         .catch(() => { loading = null; });
     } catch (_) { /* Audio must never interrupt gameplay. */ }
   }
@@ -95,5 +95,23 @@
       }
     }
     return actual;
+  };
+  const offerLevelChoices = DD.ui.offerLevelChoices;
+  DD.ui.offerLevelChoices = function(...args) {
+    const wasOpen = DD.state.dom.overlay.classList.contains('show');
+    const result = offerLevelChoices.apply(this,args);
+    if (!wasOpen && DD.state.pauseReason === 'levelup' &&
+        DD.state.dom.overlay.classList.contains('show') && levelUp &&
+        context?.state === 'running' && !document.hidden) {
+      const now = context.currentTime;
+      if (now - lastLevelUp >= .1) {
+        lastLevelUp = now;
+        const source = context.createBufferSource();
+        source.buffer = levelUp;
+        source.connect(context.destination);
+        source.start();
+      }
+    }
+    return result;
   };
 })();
