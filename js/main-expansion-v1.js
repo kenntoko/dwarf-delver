@@ -14,6 +14,11 @@ DD.main = {
     canvas.addEventListener('contextmenu', (e) => e.preventDefault());
     canvas.addEventListener('mousedown', (e) => {
       const S = DD.state;
+      // Only an unmodified primary press may dig. Secondary, wheel and
+      // combined-button gestures must never fall through into mining.
+      if (e.button !== 0 && e.button !== 2) { doubleTarget = null; return; }
+      if (e.button === 0 && (e.ctrlKey || (e.buttons & ~1))) { doubleTarget = null; return; }
+      if (e.button === 2) { doubleTarget = null; blockDoubleClick = true; }
       if (S.mode === 'won' || S.mode === 'lost') return;
       if (e.button === 0 && e.detail === 1) blockDoubleClick = !!S.paused || !!S.itemMode;
       // The second press belongs to the original gesture, never a new dig.
@@ -47,7 +52,7 @@ DD.main = {
       DD.ui.refreshHud();
     });
     canvas.addEventListener('dblclick', (e) => {
-      if (e.button !== 0 || blockDoubleClick) return;
+      if (e.button !== 0 || e.ctrlKey || (e.buttons & ~1) || blockDoubleClick) return;
       const { x, y } = cellAt(e);
       if (!DD.utils.inBounds(x, y)) return;
       const target=doubleTarget;doubleTarget=null;

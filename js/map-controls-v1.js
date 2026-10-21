@@ -48,12 +48,19 @@ DD.ui.bindDom=function(){
 const begin=DD.systems.beginFloor;DD.systems.beginFloor=function(floor){begin.call(this,floor);if(V.viewport)V.setZoom(V.zoom,true);};
 const bindInput=DD.main.bindCanvasInput;
 DD.main.bindCanvasInput=function(){
-  bindInput.call(this);const canvas=S.canvas;let gesture=null,lastTap=null,pendingTap=null,suppressUntil=0;
+  bindInput.call(this);const canvas=S.canvas;let gesture=null,lastTap=null,pendingTap=null,blockCompatibilityMouse=false;
   const cell=e=>{const r=canvas.getBoundingClientRect();return{x:Math.floor(((e.clientX-r.left)*canvas.width/r.width-C.boardRect.x)/C.TILE),y:Math.floor(((e.clientY-r.top)*canvas.height/r.height-C.boardRect.y)/C.TILE)};};
   const canAct=()=>S.mode!=='lost'&&S.mode!=='won'&&(!S.paused||S.pauseReason==='item'||(S.pauseReason==='bossIntro'&&V.hand));
-  const cancel=()=>{if(gesture)clearTimeout(gesture.timer);DD.coinHold?.endTouch();gesture=null;};
+  const clearTap=()=>{clearTimeout(pendingTap);pendingTap=null;lastTap=null;};
+  const cancel=()=>{if(!gesture)return;clearTimeout(gesture.timer);DD.coinHold?.endTouch();gesture=null;clearTap();};
+  const sameContext=g=>S.board===g.board&&S.itemMode===g.itemMode&&S.pauseReason===g.pauseReason&&S.paused===g.paused;
+  const flag=g=>{
+    if(gesture!==g||g.hand||g.moved||g.held||!sameContext(g)||!canAct()||S.itemMode||!U.inBounds(g.x,g.y))return;
+    const t=S.board.grid[g.y][g.x];if(!t.active||t.isOpen)return;
+    g.held=true;clearTap();DD.systems.toggleFlag(g.x,g.y);DD.ui.refreshHud();
+  };
   const tap=(g,e)=>{
-    if(!canAct()||S.board!==g.board||!U.inBounds(g.x,g.y))return;
+    if(!canAct()||!sameContext(g)||!U.inBounds(g.x,g.y))return;
     const t=S.board.grid[g.y][g.x];if(!t.active)return;
     if(S.itemMode){DD.systems.applyItemToCell(S.itemMode,g.x,g.y);return;}
     if(t.isOpen&&t.chest){DD.systems.openChest(g.x,g.y);return;}
@@ -64,18 +71,32 @@ DD.main.bindCanvasInput=function(){
     }
     lastTap=null;if(DD.board.validDigTarget(S.board,g.x,g.y,S.mode)){DD.systems.openTile(g.x,g.y);DD.ui.refreshHud();}
   };
-  // Keep existing mouse actions; suppress compatibility mouse events after touch.
-  for(const type of ['mousedown','dblclick','contextmenu'])canvas.addEventListener(type,e=>{if(V.hand||performance.now()<suppressUntil){e.preventDefault();e.stopImmediatePropagation();}},true);
+  // Compatibility mouse events do not have their own mouse pointerdown.
+  // Wait for a genuine mouse gesture instead of expiring after 900ms: a
+  // delayed synthetic click after removing a sign must never dig that rock.
+  for(const type of ['mousedown','dblclick','contextmenu'])canvas.addEventListener(type,e=>{if(V.hand||blockCompatibilityMouse||e.sourceCapabilities?.firesTouchEvents){e.preventDefault();e.stopImmediatePropagation();}},true);
   canvas.addEventListener('pointerdown',e=>{
-    if(e.pointerType==='mouse'&&!V.hand)return;
-    e.preventDefault();suppressUntil=performance.now()+900;
+    if(e.pointerType==='mouse'&&!e.sourceCapabilities?.firesTouchEvents){
+      if(gesture)return;
+      blockCompatibilityMouse=false;
+      if(!V.hand){clearTap();return;}
+    }
+    e.preventDefault();blockCompatibilityMouse=true;
     if(gesture){cancel();return;}if(!e.isPrimary||!canAct())return;
-    canvas.setPointerCapture(e.pointerId);const c=cell(e);gesture={...c,id:e.pointerId,board:S.board,startX:e.clientX,startY:e.clientY,px:e.clientX,py:e.clientY,hand:V.hand,moved:false,held:false};const g=gesture;
-    if(!g.hand&&!S.itemMode&&U.inBounds(c.x,c.y)&&!S.board.grid[c.y][c.x].isOpen)g.timer=setTimeout(()=>{if(gesture!==g||g.moved||!canAct()||S.board!==g.board||S.itemMode)return;g.held=true;lastTap=null;clearTimeout(pendingTap);DD.systems.toggleFlag(g.x,g.y);DD.ui.refreshHud();},450);
-    if(!g.hand&&!S.itemMode&&U.inBounds(c.x,c.y)&&S.board.grid[c.y][c.x].active&&S.board.grid[c.y][c.x].isOpen&&!S.board.grid[c.y][c.x].chest)g.timer=setTimeout(()=>{if(gesture!==g||g.moved||!canAct()||S.board!==g.board||S.itemMode)return;g.held=true;lastTap=null;clearTimeout(pendingTap);DD.coinHold?.beginTouch(g);},1000);
+    if((e.button!==0&&e.button!==2)||(e.button===0&&(e.ctrlKey||(e.buttons&~1)))){clearTap();return;}
+    canvas.setPointerCapture(e.pointerId);const c=cell(e);gesture={...c,id:e.pointerId,board:S.board,itemMode:S.itemMode,pauseReason:S.pauseReason,paused:S.paused,startTime:performance.now(),startX:e.clientX,startY:e.clientY,px:e.clientX,py:e.clientY,hand:V.hand,moved:false,held:false};const g=gesture;
+    if(e.button===2){if(S.itemMode)DD.ui.clearItemMode();else flag(g);g.held=true;clearTap();return;}
+    if(!g.hand&&!S.itemMode&&U.inBounds(c.x,c.y)&&S.board.grid[c.y][c.x].active&&!S.board.grid[c.y][c.x].isOpen){g.flagHold=true;g.timer=setTimeout(()=>flag(g),450);}
+    if(!g.hand&&!S.itemMode&&U.inBounds(c.x,c.y)&&S.board.grid[c.y][c.x].active&&S.board.grid[c.y][c.x].isOpen&&!S.board.grid[c.y][c.x].chest)g.timer=setTimeout(()=>{if(gesture!==g||g.moved||!canAct()||!sameContext(g)||S.itemMode)return;g.held=true;clearTap();DD.coinHold?.beginTouch(g);},1000);
   },{passive:false});
-  canvas.addEventListener('pointermove',e=>{const g=gesture;if(!g||g.id!==e.pointerId)return;e.preventDefault();if(Math.hypot(e.clientX-g.startX,e.clientY-g.startY)>9){g.moved=true;clearTimeout(g.timer);DD.coinHold?.endTouch(g.id);}if(g.hand)V.pan(e.clientX-g.px,e.clientY-g.py);g.px=e.clientX;g.py=e.clientY;},{passive:false});
-  canvas.addEventListener('pointerup',e=>{const g=gesture;if(!g||g.id!==e.pointerId)return;e.preventDefault();suppressUntil=performance.now()+900;clearTimeout(g.timer);DD.coinHold?.endTouch(g.id);gesture=null;if(!g.hand&&!g.moved&&!g.held)tap(g,e);},{passive:false});
+  const moved=(g,e)=>{const c=cell(e);return Math.hypot(e.clientX-g.startX,e.clientY-g.startY)>9||(!g.hand&&(c.x!==g.x||c.y!==g.y));};
+  canvas.addEventListener('pointermove',e=>{const g=gesture;if(!g||g.id!==e.pointerId)return;e.preventDefault();if(moved(g,e)){g.moved=true;clearTimeout(g.timer);clearTap();DD.coinHold?.endTouch(g.id);}if(g.hand)V.pan(e.clientX-g.px,e.clientY-g.py);g.px=e.clientX;g.py=e.clientY;},{passive:false});
+  canvas.addEventListener('pointerup',e=>{const g=gesture;if(!g||g.id!==e.pointerId)return;e.preventDefault();clearTimeout(g.timer);DD.coinHold?.endTouch(g.id);g.moved ||= moved(g,e);
+    // Input events can run before an overdue timeout on a busy frame.
+    // A physical long press is still a flag operation when released.
+    if(g.flagHold&&performance.now()-g.startTime>=450){flag(g);g.held=true;}
+    gesture=null;if(!g.hand&&!g.moved&&!g.held)tap(g,e);else clearTap();
+  },{passive:false});
   canvas.addEventListener('pointercancel',cancel);canvas.addEventListener('lostpointercapture',cancel);
   window.addEventListener('blur',()=>{cancel();clearTimeout(pendingTap);lastTap=null;});
 };
