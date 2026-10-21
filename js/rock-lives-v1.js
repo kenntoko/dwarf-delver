@@ -12,7 +12,7 @@
     // original neighboring numbers and chord rules remain consistent.
     tile.flagged = true;
     tile.autoHint = false;
-    this.addLog(`危険岩盤！ LIFE ${S.rockLives}/3`, 'bad');
+    this.addLog(`危険岩盤！ LIFE ${S.rockLives}/${S.maxRockLives || 3}`, 'bad');
     if (S.rockLives === 0) this.loseRun('危険岩盤でライフを使い切った～');
     DD.ui.refreshHud();
   };
@@ -27,7 +27,7 @@
       life.style.cssText = 'margin-left:12px;color:#ffb6a0;font-family:GuiDot,monospace;font-size:16px;white-space:nowrap';
       document.getElementById('phasePill').after(life);
     }
-    life.textContent = `LIFE ${S.rockLives}/3`;
-    life.setAttribute('aria-label', `危険岩盤の残りライフ ${S.rockLives} / 3`);
+    life.textContent = `LIFE ${S.rockLives}/${S.maxRockLives || 3}`;
+    life.setAttribute('aria-label', `危険岩盤の残りライフ ${S.rockLives} / ${S.maxRockLives || 3}`);
   };
 })();

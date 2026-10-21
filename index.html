@@ -11,6 +11,7 @@
 <link rel="stylesheet" href="./css/boss-hud-v1.css?v=boss-intro-1">
 <link rel="stylesheet" href="./css/boss-intro-v1.css?v=boss-intro-1">
 <link rel="stylesheet" href="./css/floor-result-v1.css?v=result-portrait-1">
+<link rel="stylesheet" href="./css/perks-v1.css?v=perks-1">
 </head>
 <body>
 <link rel="stylesheet" href="./css/title-screen-v1.css?v=title-2">
@@ -20,6 +21,16 @@
     <p class="title-version">PRE-RELEASE</p>
     <div class="title-hero" aria-hidden="true"></div>
     <button id="startGameButton" type="button" aria-label="ゲーム開始">START GAME</button>
+    <button id="titlePerksButton" type="button">特典</button>
+  </div>
+</section>
+<section id="perkScreen" class="perk-screen" hidden aria-labelledby="perkTitle">
+  <div class="perk-panel">
+    <h1 id="perkTitle">特典</h1>
+    <p id="perkProgress"></p><p id="perkPoints"></p>
+    <div id="perkList" class="perk-list"></div>
+    <p id="perkSaveNote" hidden></p>
+    <button id="perkBack" type="button">戻る</button>
   </div>
 </section>
 <main id="app" hidden>
@@ -100,7 +111,7 @@
   <script src="./js/floor-result-v1.js?v=result-portrait-1"></script>
   <script src="./js/coin-hold-v1.js?v=coin-hold-1"></script>
   <script src="./js/mining-audio-v1.js?v=enemy-death-1"></script>
+  <script src="./js/perks-v1.js?v=perks-1"></script>
 
 </body>
 </html>
-
